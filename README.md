@@ -5,7 +5,7 @@
 SHAP (SHapley Additive exPlanations, [1]) is an ingenious way to study black box models. SHAP values decompose - as fair as possible - predictions into additive feature contributions. Crunching SHAP values requires clever algorithms by clever people. Analyzing them, however, is super easy with the right visualizations. The package `shapviz` offers the latter: 
 
 - `sv_dependence()`: Dependence plots to study feature effects (optionally colored by heuristically strongest interacting feature).
-- `sv_importance()`: Importance plots (bar and/or beeswarm plots) to study variable importance.
+- `sv_importance()`: Importance plots (bar plots and/or beeswarm plots) to study variable importance.
 - `sv_waterfall()`: Waterfall plots to study single predictions.
 - `sv_force()`: Force plots as an alternative to waterfall plots.
 
@@ -17,12 +17,15 @@ These plots require a `shapviz` object, which is built from two things only:
 Furthermore, a `baseline` can be passed to represent an average prediction on the scale of the SHAP values.
 
 A key feature of the `shapviz` package is that `X` is used for visualization only. Thus it is perfectly fine to use factor variables, even if the underlying model would not accept these.
+Additionally, in order to improve visualization, it can sometimes make sense to clip gross outliers, take logarithms for certain columns, or replace missing values by some explicit value.
 
-To further simplify the use of `shapviz`, we added direct connectors to
+To further simplify the use of `shapviz`, we added direct connectors to the R packages
 
 - [`XGBoost`](https://CRAN.R-project.org/package=xgboost),
 - [`LightGBM`](https://CRAN.R-project.org/package=lightgbm),
-- [`fastshap`](https://CRAN.R-project.org/package=fastshap), and
+- [`fastshap`](https://CRAN.R-project.org/package=fastshap),
+- [`shapr`](https://CRAN.R-project.org/package=shapr), 
+- [`h2o`](https://CRAN.R-project.org/package=h2o), and
 - [`treeshap`](https://github.com/ModelOriented/treeshap).
 
 ## Installation
@@ -33,7 +36,7 @@ install.packages("shapviz")
 
 # Or the newest version from GitHub:
 # install.packages("devtools")
-devtools::install_github("shapviz")
+devtools::install_github("mayer79/shapviz")
 ```
 
 ## Example
@@ -63,13 +66,15 @@ fit <- xgb.train(
 
 One line of code creates a `shapviz` object. It contains SHAP values and feature values for the set of observations we are interested in. Note again that `X` is solely used as explanation dataset, not for calculating SHAP values. 
 
-In this example we construct the `shapviz` object directly from the fitted XGBoost model. Thus we also need to pass a corresponding prediction dataset `X_pred` used for calculating SHAP values by XGBoost.
+In this example, we construct the `shapviz` object directly from the fitted XGBoost model. Thus we also need to pass a corresponding prediction dataset `X_pred` used for calculating SHAP values by XGBoost.
 
 ``` r
 X_small <- X[sample(nrow(X), 2000L), ]
 
 shp <- shapviz(fit, X_pred = data.matrix(X_small), X = X_small)
 ```
+
+Note: If `X_pred` would contain one-hot-encoded dummy variables, their SHAP values could be collapsed by the `collapse` argument of `shapviz()`.
 
 ### Waterfall plot
 
@@ -93,28 +98,28 @@ sv_force(shp, row_id = 1)
 
 ### Importance
 
-We have decomposed 2000 predictions, not just one. This allows us to study variable importance at a global model level by studying average absolute SHAP values or by looking at beeswarm plots of SHAP values.
+We have decomposed 2000 predictions, not just one. This allows us to study variable importance at a global model level by studying average absolute SHAP values or by looking at beeswarm "summary" plots of SHAP values.
 
-#### Beeswarm plot
+#### Bar plot
 
 ``` r
 sv_importance(shp)
 ```
 
-![](man/figures/README-imp1.png)
+![](man/figures/README-imp1.svg)
 
-#### Bar plot
+#### Beeswarm plot
 
 ``` r
-sv_importance(shp, kind = "bar")
+sv_importance(shp, kind = "beeswarm")
 ```
 
-![](man/figures/README-imp2.svg)
+![](man/figures/README-imp2.png)
 
 #### Or both combined
 
 ``` r
-sv_importance(shp, kind = "bar", alpha = 0.2, width = 0.2)
+sv_importance(shp, kind = "both", show_numbers = TRUE, width = 0.2)
 ```
 ![](man/figures/README-imp3.png)
 
@@ -123,7 +128,7 @@ sv_importance(shp, kind = "bar", alpha = 0.2, width = 0.2)
 A scatterplot of SHAP values of a feature like `color` against its observed values gives a great impression on the feature effect on the response. Vertical scatter gives additional info on interaction effects. `shapviz` offers a heuristic to pick another feature on the color scale with potential strongest interaction.
 
 ``` r
-sv_dependence(shp, v = "color")
+sv_dependence(shp, v = "color", "auto")
 ```
 
 ![](man/figures/README-dep.png)

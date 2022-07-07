@@ -15,7 +15,9 @@ sv_force(object, ...)
   row_id = 1L,
   max_display = 6L,
   fill_colors = c("#f7d13d", "#a52c60"),
-  format_fun = function(z) prettyNum(z, digits = 3, scientific = FALSE),
+  format_shap = getOption("shapviz.format_shap"),
+  format_feat = getOption("shapviz.format_feat"),
+  format_fun = NULL,
   contrast = TRUE,
   bar_label_size = 3.2,
   show_annotation = TRUE,
@@ -39,7 +41,15 @@ Set to \code{Inf} to show all features.}
 \item{fill_colors}{A vector of exactly two fill colors: the first for positive
 SHAP values, the other for negative ones.}
 
-\item{format_fun}{Function used to format numeric feature values and SHAP values.}
+\item{format_shap}{Function used to format SHAP values. The default uses the
+global option \code{shapviz.format_shap}, which equals to
+\code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.}
+
+\item{format_feat}{Function used to format numeric feature values. The default uses
+the global option \code{shapviz.format_feat}, which equals to
+\code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.}
+
+\item{format_fun}{Deprecated. Use \code{format_shap} and/or \code{format_feat} instead.}
 
 \item{contrast}{Logical flag that detemines whether to use white text in dark arrows.
 Default is \code{TRUE}.}
@@ -52,7 +62,7 @@ Default is \code{TRUE}.}
 \item{annotation_size}{Size of the annotation text (f(x)=... and E(f(x))=...).}
 }
 \value{
-An object of class \code{ggplot} representing a force plot.
+An object of class "ggplot" representing a force plot.
 }
 \description{
 Creates a force plot of SHAP values of one single observation. The value of
@@ -74,5 +84,5 @@ sv_force(x)
 sv_force(x, row_id = 65, max_display = 3, size = 9, fill_colors = 4:5)
 }
 \seealso{
-\code{\link{sv_waterfall}}.
+\code{\link{sv_waterfall}}
 }

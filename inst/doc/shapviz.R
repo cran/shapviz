@@ -9,14 +9,15 @@ knitr::opts_chunk$set(
   fig.align = "center"
 )
 
-library(shapviz)
-
 ## -----------------------------------------------------------------------------
 library(shapviz)
 library(ggplot2)
 library(xgboost)
 
 set.seed(3653)
+
+ord <- c("clarity", "cut", "color")
+diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
 
 X <- diamonds[c("carat", "cut", "color", "clarity")]
 dtrain <- xgb.DMatrix(data.matrix(X), label = diamonds$price)
@@ -41,14 +42,14 @@ sv_waterfall(shp, row_id = 1L) +
 sv_force(shp, row_id = 1L)
 
 ## -----------------------------------------------------------------------------
-# A beeswarm plot
+# A bar plot of mean absolute SHAP values
 sv_importance(shp)
 
-# Or much simpler: a bar plot of mean absolute SHAP values
-sv_importance(shp, kind = "bar")
+# A beeswarm plot
+sv_importance(shp, kind = "beeswarm")
 
 # Or both!
-sv_importance(shp, kind = "both", alpha = 0.2, width = 0.2)
+sv_importance(shp, kind = "both", show_numbers = TRUE, width = 0.2)
 
 ## -----------------------------------------------------------------------------
 sv_dependence(shp, v = "color", color_var = "auto")

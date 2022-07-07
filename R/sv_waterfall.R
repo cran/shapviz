@@ -10,14 +10,21 @@
 #' should be plotted? If there are more features, they will be collapsed to one feature.
 #' The default is ten in order to not overload the plot. Set to \code{Inf} to show
 #' all features.
-#' @param sort_fun Function used to sort the SHAP values for plotting.
-#' By default, the values are sorted by absolute SHAP values, i.e., the default
-#' is \code{function(shap) = abs(shap)}. The result of the function is passed to
-#' \code{order()}.
+#' @param order_fun Function specifying the order of the variables/SHAP values.
+#' It maps the vector \code{s} of SHAP values to sort indices from 1 to \code{length(s)}.
+#' The default is \code{function(s) order(abs(s))}.
+#' To plot without sorting, use \code{function(s) 1:length(s)} or
+#' \code{function(s) length(s):1}.
+#' @param sort_fun Deprecated in favour of \code{order_fun}.
 #' @param fill_colors A vector of exactly two fill colors: the first for positive
 #' SHAP values, the other for negative ones.
-#' @param format_fun Function used to (A) format numeric feature values shown on the
-#' axis labels, and (B) to format SHAP values shown in the arrow bars.
+#' @param format_shap Function used to format SHAP values. The default uses the
+#' global option \code{shapviz.format_shap}, which equals to
+#' \code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.
+#' @param format_feat Function used to format numeric feature values. The default uses
+#' the global option \code{shapviz.format_feat}, which equals to
+#' \code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.
+#' @param format_fun Deprecated. Use \code{format_shap} and/or \code{format_feat} instead.
 #' @param contrast Logical flag that detemines whether to use white text in dark arrows.
 #' Default is \code{TRUE}.
 #' @param show_connection Should connecting lines be shown? Default is \code{TRUE}.
@@ -26,9 +33,9 @@
 #' @param ... Arguments passed to \code{ggfittext::geom_fit_text()}.
 #' For example, \code{size = 9} will use fixed text size in the bars and \code{size = 0}
 #' will altogether suppress adding text to the bars.
-#' @return An object of class \code{ggplot} representing a waterfall plot.
+#' @return An object of class "ggplot" representing a waterfall plot.
 #' @export
-#' @seealso \code{\link{sv_force}}.
+#' @seealso \code{\link{sv_force}}
 #' @examples
 #' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
 #' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50)
@@ -53,29 +60,41 @@ sv_waterfall.default <- function(object, ...) {
 #' @describeIn sv_waterfall SHAP waterfall plot for an object of class "shapviz".
 #' @export
 sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
-                                 sort_fun = function(shap) abs(shap),
+                                 order_fun = function(s) order(abs(s)),
+                                 sort_fun = NULL,
                                  fill_colors = c("#f7d13d", "#a52c60"),
-                                 format_fun = function(z)
-                                   prettyNum(z, digits = 3, scientific = FALSE),
+                                 format_shap = getOption("shapviz.format_shap"),
+                                 format_feat = getOption("shapviz.format_feat"),
+                                 format_fun = NULL,
                                  contrast = TRUE, show_connection = TRUE,
                                  show_annotation = TRUE, annotation_size = 3.2, ...) {
   stopifnot(
     "Only one row number can be passed" = length(row_id) == 1L,
     "Exactly two fill colors must be passed" = length(fill_colors) == 2L,
-    "Not a function" = is.function(format_fun),
-    "Not a function" = is.function(sort_fun)
+    "format_shap must be a function" = is.function(format_shap),
+    "format_feat must be a function" = is.function(format_feat),
+    "order_fun must be a function" = is.function(order_fun)
   )
+  if (!is.null(sort_fun)) {
+    warning("sort_fun is deprecated and will be removed in version 0.3.0.
+            Use order_fun instead.")
+  }
+  if (!is.null(format_fun)) {
+    warning("format_fun is deprecated and will be removed in version 0.3.0.
+            Use format_shap and/or format_feat instead.")
+  }
+
   X <- get_feature_values(object)[row_id, ]
   S <- get_shap_values(object)[row_id, ]
   b <- get_baseline(object)
-  dat <- data.frame(S = S, label = paste(names(X), format_fun(X), sep = " = "))
+  dat <- data.frame(S = S, label = paste(names(X), format_feat(X), sep = " = "))
 
   # Collapse unimportant features
   dat <- .collapse(dat, S, max_display = max_display)
   m <- nrow(dat)
 
   # Add order dependent columns
-  dat <- dat[order(sort_fun(dat$S)), ]
+  dat <- dat[order_fun(dat$S), ]
   dat$i <- seq_len(m)
   dat$to <- cumsum(dat$S) + b
   dat$from <- .lag(dat$to, default = b)
@@ -99,7 +118,7 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
       arrow_body_height = height
     ) +
     ggfittext::geom_fit_text(
-      aes(label = paste0(ifelse(S > 0, "+", ""), format_fun(S))),
+      aes(label = paste0(ifelse(S > 0, "+", ""), format_shap(S))),
       show.legend = FALSE,
       contrast = contrast,
       ...
@@ -140,7 +159,7 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
         "text",
         x = full_range,
         y = c(m, 1) + m * c(0.1, -0.1) + 0.15 * c(1, -1),
-        label = paste0(c("f(x)=", "E[f(x)]="), format_fun(full_range)),
+        label = paste0(c("f(x)=", "E[f(x)]="), format_shap(full_range)),
         size = annotation_size
       ) +
       scale_x_continuous(expand = expansion(mult = c(0.05, 0.12))) +

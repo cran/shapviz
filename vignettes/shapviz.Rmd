@@ -19,8 +19,6 @@ knitr::opts_chunk$set(
   fig.height = 4,
   fig.align = "center"
 )
-
-library(shapviz)
 ```
 
 ## Introduction
@@ -28,7 +26,7 @@ library(shapviz)
 SHAP (SHapley Additive exPlanations, see @lundberg2017) is an ingenious way to study black box models. SHAP values decompose - as fair as possible - predictions into additive feature contributions. Crunching SHAP values requires clever algorithms by clever people. Analyzing them, however, is super easy with the right visualizations. The package `shapviz` offers the latter:
 
 - `sv_dependence()`: Dependence plots to study feature effects (optionally colored by heuristically strongest interacting feature).
-- `sv_importance()`: Importance plots (bar and/or beeswarm plots) to study variable importance.
+- `sv_importance()`: Importance plots (bar plots and/or beeswarm plots) to study variable importance.
 - `sv_waterfall()`: Waterfall plots to study single predictions.
 - `sv_force()`: Force plots as an alternative to waterfall plots.
 
@@ -40,12 +38,15 @@ These plots require a `shapviz` object, which is built from two things only:
 Furthermore, a `baseline` can be passed to represent an average prediction on the scale of the SHAP values.
 
 A key feature of the `shapviz` package is that `X` is used for visualization only. Thus it is perfectly fine to use factor variables, even if the underlying model would not accept these.
+Additionally, in order to improve visualization, it can sometimes make sense to clip gross outliers, take logarithms for certain columns, or replace missing values by some explicit value.
 
-To further simplify the use of `shapviz`, we added direct connectors to
+To further simplify the use of `shapviz`, we added direct connectors to the R packages
 
 - [`XGBoost`](https://CRAN.R-project.org/package=xgboost),
 - [`LightGBM`](https://CRAN.R-project.org/package=lightgbm),
-- [`fastshap`](https://CRAN.R-project.org/package=fastshap), and
+- [`fastshap`](https://CRAN.R-project.org/package=fastshap), 
+- [`shapr`](https://CRAN.R-project.org/package=shapr),
+- [`h2o`](https://CRAN.R-project.org/package=h2o), and
 - [`treeshap`](https://github.com/ModelOriented/treeshap).
 
 ## Installation
@@ -56,7 +57,7 @@ install.packages("shapviz")
 
 # Or the newest version from GitHub:
 # install.packages("devtools")
-devtools::install_github("shapviz")
+devtools::install_github("mayer79/shapviz")
 ```
 
 ## Example: Diamond prices
@@ -71,6 +72,9 @@ library(ggplot2)
 library(xgboost)
 
 set.seed(3653)
+
+ord <- c("clarity", "cut", "color")
+diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
 
 X <- diamonds[c("carat", "cut", "color", "clarity")]
 dtrain <- xgb.DMatrix(data.matrix(X), label = diamonds$price)
@@ -95,6 +99,8 @@ X_small <- X[sample(nrow(X), 2000L), ]
 shp <- shapviz(fit, X_pred = data.matrix(X_small), X = X_small)
 ```
 
+Note: If `X_pred` would contain one-hot-encoded dummy variables, their SHAP values could be collapsed by the `collapse` argument of `shapviz()`.
+
 ### Decompose single prediction
 
 The main idea behind SHAP values is to decompose, in a fair way, a prediction into additive contributions of each feature. Typical visualizations include waterfall plots and force plots:
@@ -113,17 +119,17 @@ sv_force(shp, row_id = 1L)
 
 ### SHAP importance
 
-Studying SHAP decompositions of many observations allows to gain an impression on variable importance. As simple descriptive measure, the mean absolute SHAP value of each feature is considered. These values can be plotted as a simple bar plot, or, to add information on the sign of the feature effects, as a beeswarm plot sorted by the mean absolute SHAP values. 
+Studying SHAP decompositions of many observations allows to gain an impression on variable importance. As simple descriptive measure, the mean absolute SHAP value of each feature is considered. These values can be plotted as a simple bar plot, or, to add information on the sign of the feature effects, as a beeswarm plot sorted by the mean absolute SHAP values. Such beeswarm plots are often called "summary plots".
 
 ```{r}
-# A beeswarm plot
+# A bar plot of mean absolute SHAP values
 sv_importance(shp)
 
-# Or much simpler: a bar plot of mean absolute SHAP values
-sv_importance(shp, kind = "bar")
+# A beeswarm plot
+sv_importance(shp, kind = "beeswarm")
 
 # Or both!
-sv_importance(shp, kind = "both", alpha = 0.2, width = 0.2)
+sv_importance(shp, kind = "both", show_numbers = TRUE, width = 0.2)
 ```
 
 ### SHAP dependence plots
@@ -154,6 +160,7 @@ fit <- lgb.train(
 )
 
 shp <- shapviz(fit, X_pred = data.matrix(X_small), X = X_small)
+sv_importance(shp)
 ```
 ### fastshap
 
@@ -165,8 +172,46 @@ explainer <- explain(fit, newdata = X_small, exact = TRUE)
 shp <- shapviz(explainer, X = X_small)
 sv_dependence(shp, "carat")
 ```
+### shapr
 
-### treeshap with catboost
+``` r
+library(shapr)
+
+fit <- lm(price ~ carat + clarity + cut + color, data = diamonds)
+explainer <- shapr(X_small, fit)
+
+# Takes about three minutes(!)
+system.time(
+  explanation <- explain(
+    X_small,
+    approach = "ctree",
+    explainer = explainer,
+    prediction_zero = mean(diamonds$price)
+  )
+)
+
+shp <- shapviz(explanation)
+sv_dependence(shp, "carat", "auto")
+```
+
+### H2O
+
+If you work with a tree-based H2O model:
+
+``` r
+library(h2o)
+
+h2o.init()
+
+dia_h2o <- as.h2o(diamonds)
+
+fit <- h2o.gbm(c("carat", "clarity", "color", "cut"), "price", training_frame = dia_h2o)
+x <- shapviz(fit, X_pred = X_small)
+sv_force(x, row_id = 1)
+sv_dependence(x, "carat", "auto")
+```
+
+### treeshap
 
 ``` r
 library(treeshap)
@@ -204,7 +249,7 @@ shp <- shapviz(S, X, baseline = 4)
 ## Classification models
 
 The plot functions work with one-dimensional model predictions only. However, the wrappers
-for XGBoost and LightGBM allows to select the categery of interest and work with its predicted (logit) probabilities, simply by passing `which_class` in the constructor.
+for XGBoost and LightGBM allow to select the category of interest and work with its predicted (logit) probabilities, simply by providing `which_class` in the constructor.
 
 ## References
 

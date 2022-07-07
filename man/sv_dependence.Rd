@@ -15,6 +15,7 @@ sv_dependence(object, ...)
   v,
   color_var = NULL,
   color = "#3b528b",
+  viridis_args = getOption("shapviz.viridis_args"),
   jitter_width = NULL,
   ...
 )
@@ -28,9 +29,19 @@ sv_dependence(object, ...)
 
 \item{color_var}{Feature name to be used on the color scale to investigate interactions.
 The default is \code{NULL} (no color feature). An experimental option is "auto",
-which selects - by a simple heuristic - a variable with seemingly strongest interaction.}
+which selects - by a simple heuristic - a variable with seemingly strongest interaction.
+Check details for how to change the color scale.}
 
 \item{color}{Color to be used if \code{color_var = NULL}.}
+
+\item{viridis_args}{List of viridis color scale arguments, see
+\code{?ggplot2::scale_color_viridis_c()}. The default points to the global
+option \code{shapviz.viridis_args}, which corresponds to
+\code{list(begin = 0.25, end = 0.85, option = "inferno")}.
+These values are passed to \code{ggplot2::scale_color_viridis_*()}.
+For example, to switch to a standard viridis scale, you can either change the default
+with \code{options(shapviz.viridis_args = NULL)} or set \code{viridis_args = NULL}.
+Only relevant if \code{color_var} is not \code{NULL}.}
 
 \item{jitter_width}{The amount of horizontal jitter. The default (\code{NULL}) will
 use a value of 0.2 in case \code{v} is a factor, logical, or character variable, and
@@ -40,12 +51,12 @@ no jitter otherwise.}
 An object of class \code{ggplot} representing a dependence plot.
 }
 \description{
-Creates a scatterplot of SHAP values of feature \code{v} against values of \code{v}.
-A second variable, \code{color_var}, can be selected to be used on the color scale.
-This allows to gain an impression of possible interaction effects.
-Set \code{color_var} to \code{"auto"} in order to select
-the color feature with seemingly strongest interaction based on a simple heuristic.
-For discrete \code{v}, horizontal scatter is added by default.
+Creates a scatter plot of the SHAP values of a feature against its feature values.
+A second variable, \code{color_var}, can be selected to be used on the color axis.
+In this way, one can get a sense of possible interaction effects.
+Set \code{color_var = "auto"} to use a simple heuristic to select the color
+feature with the strongest apparent interaction.
+With discrete \code{v}, horizontal jitter is added by default.
 }
 \section{Methods (by class)}{
 \itemize{
@@ -63,5 +74,5 @@ sv_dependence(x, "Petal.Length", color_var = "Species")
 sv_dependence(x, "Species", color_var = "auto")
 }
 \seealso{
-\code{\link{potential_interactions}}.
+\code{\link{potential_interactions}}
 }

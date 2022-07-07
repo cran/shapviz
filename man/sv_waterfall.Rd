@@ -14,9 +14,12 @@ sv_waterfall(object, ...)
   object,
   row_id = 1L,
   max_display = 10L,
-  sort_fun = function(shap) abs(shap),
+  order_fun = function(s) order(abs(s)),
+  sort_fun = NULL,
   fill_colors = c("#f7d13d", "#a52c60"),
-  format_fun = function(z) prettyNum(z, digits = 3, scientific = FALSE),
+  format_shap = getOption("shapviz.format_shap"),
+  format_feat = getOption("shapviz.format_feat"),
+  format_fun = NULL,
   contrast = TRUE,
   show_connection = TRUE,
   show_annotation = TRUE,
@@ -38,16 +41,26 @@ should be plotted? If there are more features, they will be collapsed to one fea
 The default is ten in order to not overload the plot. Set to \code{Inf} to show
 all features.}
 
-\item{sort_fun}{Function used to sort the SHAP values for plotting.
-By default, the values are sorted by absolute SHAP values, i.e., the default
-is \code{function(shap) = abs(shap)}. The result of the function is passed to
-\code{order()}.}
+\item{order_fun}{Function specifying the order of the variables/SHAP values.
+It maps the vector \code{s} of SHAP values to sort indices from 1 to \code{length(s)}.
+The default is \code{function(s) order(abs(s))}.
+To plot without sorting, use \code{function(s) 1:length(s)} or
+\code{function(s) length(s):1}.}
+
+\item{sort_fun}{Deprecated in favour of \code{order_fun}.}
 
 \item{fill_colors}{A vector of exactly two fill colors: the first for positive
 SHAP values, the other for negative ones.}
 
-\item{format_fun}{Function used to (A) format numeric feature values shown on the
-axis labels, and (B) to format SHAP values shown in the arrow bars.}
+\item{format_shap}{Function used to format SHAP values. The default uses the
+global option \code{shapviz.format_shap}, which equals to
+\code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.}
+
+\item{format_feat}{Function used to format numeric feature values. The default uses
+the global option \code{shapviz.format_feat}, which equals to
+\code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.}
+
+\item{format_fun}{Deprecated. Use \code{format_shap} and/or \code{format_feat} instead.}
 
 \item{contrast}{Logical flag that detemines whether to use white text in dark arrows.
 Default is \code{TRUE}.}
@@ -59,7 +72,7 @@ Default is \code{TRUE}.}
 \item{annotation_size}{Size of the annotation text (f(x)=... and E(f(x))=...).}
 }
 \value{
-An object of class \code{ggplot} representing a waterfall plot.
+An object of class "ggplot" representing a waterfall plot.
 }
 \description{
 Creates a waterfall plot of SHAP values of one single observation. The value of
@@ -86,5 +99,5 @@ shp <- shapviz(S, X)
 sv_waterfall(shp)
 }
 \seealso{
-\code{\link{sv_force}}.
+\code{\link{sv_force}}
 }
