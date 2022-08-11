@@ -362,8 +362,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 black box models. SHAP values decompose - as fair as possible -
 predictions into additive feature contributions. Crunching SHAP values
 requires clever algorithms by clever people. Analyzing them, however, is
-super easy with the right visualizations. The package
-<code>shapviz</code> offers the latter:</p>
+super easy with the right visualizations. The “shapviz” package offers
+the latter:</p>
 <ul>
 <li><code>sv_dependence()</code>: Dependence plots to study feature
 effects (optionally colored by heuristically strongest interacting
@@ -375,31 +375,35 @@ predictions.</li>
 <li><code>sv_force()</code>: Force plots as an alternative to waterfall
 plots.</li>
 </ul>
-<p>These plots require a <code>shapviz</code> object, which is built
-from two things only:</p>
+<p>These plots require a “shapviz” object, which is built from two
+things only:</p>
 <ol style="list-style-type: decimal">
 <li><code>S</code>: Matrix of SHAP values</li>
 <li><code>X</code>: Dataset with corresponding feature values</li>
 </ol>
 <p>Furthermore, a <code>baseline</code> can be passed to represent an
 average prediction on the scale of the SHAP values.</p>
-<p>A key feature of the <code>shapviz</code> package is that
-<code>X</code> is used for visualization only. Thus it is perfectly fine
-to use factor variables, even if the underlying model would not accept
-these. Additionally, in order to improve visualization, it can sometimes
-make sense to clip gross outliers, take logarithms for certain columns,
-or replace missing values by some explicit value.</p>
-<p>To further simplify the use of <code>shapviz</code>, we added direct
-connectors to the R packages</p>
+<p>A key feature of “shapviz” is that <code>X</code> is used for
+visualization only. Thus it is perfectly fine to use factor variables,
+even if the underlying model would not accept these. Additionally, in
+order to improve visualization, it can sometimes make sense to clip
+gross outliers, take logarithms for certain columns, or replace missing
+values by some explicit value.</p>
+<p>To further simplify the use of “shapviz”, we added direct connectors
+to the R packages</p>
 <ul>
 <li><a href="https://CRAN.R-project.org/package=xgboost"><code>XGBoost</code></a>,</li>
 <li><a href="https://CRAN.R-project.org/package=lightgbm"><code>LightGBM</code></a>,</li>
 <li><a href="https://CRAN.R-project.org/package=fastshap"><code>fastshap</code></a>,</li>
 <li><a href="https://CRAN.R-project.org/package=shapr"><code>shapr</code></a>,</li>
-<li><a href="https://CRAN.R-project.org/package=h2o"><code>h2o</code></a>,
+<li><a href="https://CRAN.R-project.org/package=h2o"><code>h2o</code></a>,</li>
+<li><a href="https://github.com/ModelOriented/treeshap"><code>treeshap</code></a>,
 and</li>
-<li><a href="https://github.com/ModelOriented/treeshap"><code>treeshap</code></a>.</li>
+<li><a href="https://github.com/mayer79/kernelshap"><code>kernelshap</code></a></li>
 </ul>
+<p><a href="https://github.com/catboost"><code>CatBoost</code></a> is
+not included, but see Section “Any other package” how to use its SHAP
+calculation backend with “shapviz”.</p>
 </div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
@@ -436,12 +440,12 @@ on the four “C” features.</p>
 </div>
 <div id="create-shapviz-object" class="section level3">
 <h3>Create “shapviz” object</h3>
-<p>One line of code creates a <code>shapviz</code> object. It contains
-SHAP values and feature values for the set of observations we are
-interested in. Note again that <code>X</code> is solely used as
-explanation dataset, not for calculating SHAP values.</p>
-<p>In this example we construct the <code>shapviz</code> object directly
-from the fitted XGBoost model. Thus we also need to pass a corresponding
+<p>One line of code creates a “shapviz” object. It contains SHAP values
+and feature values for the set of observations we are interested in.
+Note again that <code>X</code> is solely used as explanation dataset,
+not for calculating SHAP values.</p>
+<p>In this example we construct the “shapviz” object directly from the
+fitted XGBoost model. Thus we also need to pass a corresponding
 prediction dataset <code>X_pred</code> used for calculating SHAP values
 by XGBoost.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>X_small <span class="ot">&lt;-</span> X[<span class="fu">sample</span>(<span class="fu">nrow</span>(X), 2000L), ]</span>
@@ -506,7 +510,7 @@ similar values on the x axis, the stronger the interactions.</p>
 <h2>Interface to other packages</h2>
 <p>The above example uses XGBoost to calculate SHAP values. In the
 following sections, we show (without running the code), how other
-packages work together with <code>shapviz</code>.</p>
+packages work together with “shapviz”.</p>
 <div id="lightgbm" class="section level3">
 <h3>LightGBM</h3>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span>
@@ -535,16 +539,16 @@ packages work together with <code>shapviz</code>.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(shapr)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> carat <span class="sc">+</span> clarity <span class="sc">+</span> cut <span class="sc">+</span> color, <span class="at">data =</span> diamonds)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>explainer <span class="ot">&lt;-</span> <span class="fu">shapr</span>(X_small, fit)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>X_smaller <span class="ot">&lt;-</span> X[<span class="fu">sample</span>(<span class="fu">nrow</span>(X), 200L), ]</span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes about three minutes(!)</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  explanation <span class="ot">&lt;-</span> <span class="fu">explain</span>(</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    X_small,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">approach =</span> <span class="st">&quot;ctree&quot;</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">explainer =</span> explainer,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">prediction_zero =</span> <span class="fu">mean</span>(diamonds<span class="sc">$</span>price)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>explainer <span class="ot">&lt;-</span> <span class="fu">shapr</span>(X_smaller, fit,)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes about 15 seconds</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>explanation <span class="ot">&lt;-</span> <span class="fu">explain</span>(</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  X_smaller,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">approach =</span> <span class="st">&quot;ctree&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">explainer =</span> explainer,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">prediction_zero =</span> <span class="fu">mean</span>(diamonds<span class="sc">$</span>price)</span>
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(explanation)</span>
@@ -567,32 +571,87 @@ packages work together with <code>shapviz</code>.</p>
 <div id="treeshap" class="section level3">
 <h3>treeshap</h3>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(treeshap)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(catboost)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ranger)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(X) <span class="fu">data.frame</span>(<span class="fu">data.matrix</span>(X))</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>X_cat <span class="ot">&lt;-</span> <span class="fu">catboost.load_pool</span>(<span class="at">data =</span> <span class="fu">f</span>(X), <span class="at">label =</span> diamonds<span class="sc">$</span>price)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">catboost.train</span>(</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  X_cat, </span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">params =</span> <span class="fu">list</span>(</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">loss_function =</span> <span class="st">&quot;RMSE&quot;</span>, </span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">iterations =</span> <span class="dv">165</span>, </span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">logging_level =</span> <span class="st">&quot;Silent&quot;</span>, </span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">allow_writing_files =</span> <span class="cn">FALSE</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>unified_catboost <span class="ot">&lt;-</span> <span class="fu">catboost.unify</span>(fit, <span class="fu">f</span>(X))</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>shaps <span class="ot">&lt;-</span> <span class="fu">treeshap</span>(unified_catboost, <span class="fu">f</span>(X_small))</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(shaps, <span class="at">X =</span> X_small)</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp, <span class="st">&quot;clarity&quot;</span>, <span class="at">color_var =</span> <span class="st">&quot;auto&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> <span class="dv">1</span>)</span></code></pre></div>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">ranger</span>(<span class="at">y =</span> diamonds<span class="sc">$</span>price, <span class="at">x =</span> <span class="fu">data.matrix</span>(X), <span class="at">max.depth =</span> <span class="dv">6</span>, <span class="at">num.trees =</span> <span class="dv">100</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>unified_model <span class="ot">&lt;-</span> <span class="fu">ranger.unify</span>(fit, <span class="fu">data.matrix</span>(X))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>shaps <span class="ot">&lt;-</span> <span class="fu">treeshap</span>(unified_model, <span class="fu">data.matrix</span>(X_small))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(shaps, <span class="at">X =</span> X_small)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp, <span class="st">&quot;clarity&quot;</span>, <span class="at">color_var =</span> <span class="st">&quot;auto&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> <span class="dv">1</span>)</span></code></pre></div>
+</div>
+<div id="kernelshap" class="section level3">
+<h3>kernelshap</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kernelshap)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>X_smaller <span class="ot">&lt;-</span> X[<span class="fu">sample</span>(<span class="fu">nrow</span>(X), 200L), ]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> carat <span class="sc">+</span> clarity <span class="sc">+</span> cut <span class="sc">+</span> color, <span class="at">data =</span> diamonds)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes about 30 seconds</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  ks <span class="ot">&lt;-</span> <span class="fu">kernelshap</span>(X_smaller, <span class="cf">function</span>(X) <span class="fu">predict</span>(fit, X), X_smaller)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(ks)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp, <span class="st">&quot;carat&quot;</span>)</span></code></pre></div>
 </div>
 <div id="any-other-package" class="section level3">
 <h3>Any other package</h3>
 <p>The most general interface is to provide a matrix of SHAP values and
-corresponding feature values:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>S <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;y&quot;</span>)))</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">10</span>))</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(S, X, <span class="at">baseline =</span> <span class="dv">4</span>)</span></code></pre></div>
+corresponding feature values (and optionally, a baseline value):</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>S <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;y&quot;</span>)))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">10</span>))</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(S, X, <span class="at">baseline =</span> <span class="dv">4</span>)</span></code></pre></div>
+<p>An example is CatBoost: it is not on CRAN and requires
+<code>catboost.*()</code> functions to calculate SHAP values, so we
+cannot directly add it to “shapviz” for now. Just use a wrapper like
+this:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(catboost)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>shapviz.catboost.Model <span class="ot">&lt;-</span> <span class="cf">function</span>(object, X_pred, <span class="at">X =</span> X_pred, <span class="at">collapse =</span> <span class="cn">NULL</span>, ...) {</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;catboost&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;Package &#39;catboost&#39; not installed&quot;</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;X must be a matrix or data.frame. It can&#39;t be an object of class catboost.Pool&quot;</span> <span class="ot">=</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.matrix</span>(X) <span class="sc">||</span> <span class="fu">is.data.frame</span>(X),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;X_pred must be a matrix, a data.frame, or a catboost.Pool&quot;</span> <span class="ot">=</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.matrix</span>(X_pred) <span class="sc">||</span> <span class="fu">is.data.frame</span>(X_pred) <span class="sc">||</span> <span class="fu">inherits</span>(X_pred, <span class="st">&quot;catboost.Pool&quot;</span>),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;X_pred must have column names&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">is.null</span>(<span class="fu">colnames</span>(X_pred))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">inherits</span>(X_pred, <span class="st">&quot;catboost.Pool&quot;</span>)) {</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    X_pred <span class="ot">&lt;-</span> <span class="fu">catboost.load_pool</span>(X_pred)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">&lt;-</span> <span class="fu">catboost.get_feature_importance</span>(object, X_pred, <span class="at">type =</span> <span class="st">&quot;ShapValues&quot;</span>, ...)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Call matrix method</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  pp <span class="ot">&lt;-</span> <span class="fu">ncol</span>(X_pred) <span class="sc">+</span> 1L</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  baseline <span class="ot">&lt;-</span> S[1L, pp]</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">&lt;-</span> S[, <span class="sc">-</span>pp, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(S) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X_pred)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shapviz</span>(S, <span class="at">X =</span> X, <span class="at">baseline =</span> baseline, <span class="at">collapse =</span> collapse)</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Example</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>X_pool <span class="ot">&lt;-</span> <span class="fu">catboost.load_pool</span>(diamonds[<span class="fu">colnames</span>(X)], <span class="at">label =</span> diamonds<span class="sc">$</span>price)</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">catboost.train</span>(</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>  X_pool, </span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">params =</span> <span class="fu">list</span>(</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">loss_function =</span> <span class="st">&quot;RMSE&quot;</span>, </span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">iterations =</span> <span class="dv">165</span>, </span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">logging_level =</span> <span class="st">&quot;Silent&quot;</span>, </span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">allow_writing_files =</span> <span class="cn">FALSE</span></span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>shp <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(fit, X_small)</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp)</span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp, <span class="st">&quot;clarity&quot;</span>, <span class="at">color_var =</span> <span class="st">&quot;auto&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> <span class="dv">1</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="classification-models" class="section level2">

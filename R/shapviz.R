@@ -9,6 +9,7 @@
 #'   \item H2O model (tree-based regression or binary classification model)
 #'   \item "shapr" object from the package "shapr"
 #'   \item The result of calling \code{treeshap()} from the "treeshap" package
+#'   \item "kernelshap" object from the "kernelshap" package
 #' }
 #' The "shapviz" vignette explains how to use each of them.
 #' Together with the main input, a data set \code{X} of feature values is required,
@@ -18,6 +19,7 @@
 #' gross outliers, logarithmize certain columns, or replace missing values with an
 #' explicit value. SHAP values of dummy variables can be combined using the convenient
 #' \code{collapse} argument.
+#' @importFrom xgboost xgb.train
 #' @param object Object to be converted to an object of type "shapviz".
 #' @param X Corresponding matrix or data.frame of feature values used for visualization.
 #' @param X_pred Data set as expected by the \code{predict} function of
@@ -57,7 +59,7 @@ shapviz <- function(object, ...){
 shapviz.default = function(object, ...) {
   stop("No default method available. shapviz() is available for objects
        of class 'matrix', 'xgb.Booster', 'lgb.Booster', 'treeshap',
-       'shapr', 'H2OModel', and 'explain' (from fastshap package).")
+       'shapr', 'H2OModel', 'explain' (from fastshap package), and 'kernelshap'.")
 }
 
 #' @describeIn shapviz Creates a "shapviz" object from a matrix of SHAP values.
@@ -142,9 +144,7 @@ shapviz.xgb.Booster = function(object, X_pred, X = X_pred,
       is.matrix(X_pred) || inherits(X_pred, "xgb.DMatrix"),
     "X_pred must have column names" = !is.null(colnames(X_pred))
   )
-  if (!inherits(X_pred, "xgb.DMatrix")) {
-    X_pred <- xgboost::xgb.DMatrix(X_pred)
-  }
+
   S <- stats::predict(object, newdata = X_pred, predcontrib = TRUE, ...)
 
   # Multiclass
@@ -226,6 +226,17 @@ shapviz.shapr <- function(object, X = object[["x_test"]], collapse = NULL, ...) 
     dt[, setdiff(colnames(dt), "none"), drop = FALSE],
     X = X,
     baseline = dt[1L, "none"],
+    collapse = collapse
+  )
+}
+
+#' @describeIn shapviz Creates a "shapviz" object from kernelshap's "kernelshap()" method.
+#' @export
+shapviz.kernelshap <- function(object, X = object[["X"]], collapse = NULL, ...) {
+  shapviz.matrix(
+    object[["S"]],
+    X = X,
+    baseline = object[["baseline"]],
     collapse = collapse
   )
 }
