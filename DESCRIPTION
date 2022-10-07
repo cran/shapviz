@@ -1,6 +1,6 @@
 Package: shapviz
 Title: SHAP Visualizations
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: 
     person("Michael", "Mayer", , "mayermichael79@gmail.com", role = c("aut", "cre"))
 Description: Visualizations for SHAP (SHapley Additive exPlanations), such
@@ -27,8 +27,8 @@ Config/testthat/edition: 3
 URL: https://github.com/mayer79/shapviz
 BugReports: https://github.com/mayer79/shapviz/issues
 NeedsCompilation: no
-Packaged: 2022-08-11 18:54:36 UTC; Michael
+Packaged: 2022-10-07 11:34:48 UTC; Michael
 Author: Michael Mayer [aut, cre]
 Maintainer: Michael Mayer <mayermichael79@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-08-11 21:20:02 UTC
+Date/Publication: 2022-10-07 11:50:02 UTC

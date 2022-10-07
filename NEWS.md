@@ -1,3 +1,13 @@
+# shapviz 0.2.2
+
+## Bug fix
+
+- For R versions < 4.1, `sv_importance()` would return an error.
+
+## Minor improvements
+
+- kernelshap wrapper now also can deal with multioutput models.
+
 # shapviz 0.2.1
 
 ## Major improvements
