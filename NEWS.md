@@ -1,3 +1,19 @@
+# shapviz 0.3.0
+
+## Less picky interface
+
+- The argument `X` of the constructor of `shapviz()` is now less picky. If it contains columns not present in the SHAP matrix, they are silently dropped. Furthermore, the column order of the SHAP matrix and `X` is now determined by the SHAP matrix.
+
+## Removed (according to depreciation cycle)
+
+- Functions `shapviz_from_lgb_predict()` and `shapviz_from_xgb_predict()`
+- `format_fun` argument in `sv_force()` and `sv_waterfall()`
+- `sort_fun` argument in `sv_waterfall()`
+
+## Minor changes
+
+- `collapse_shap()` is not anymore an S3 method. It is just a normal function that can be applied to a matrix.
+
 # shapviz 0.2.2
 
 ## Bug fix

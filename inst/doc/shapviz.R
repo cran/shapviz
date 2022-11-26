@@ -16,11 +16,13 @@ library(xgboost)
 
 set.seed(3653)
 
+# Turn ordinal factors into normal ones
 ord <- c("clarity", "cut", "color")
 diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
 
-X <- diamonds[c("carat", "cut", "color", "clarity")]
-dtrain <- xgb.DMatrix(data.matrix(X), label = diamonds$price)
+# Fit XGBoost model
+x <- c("carat", "clarity", "cut", "color")
+dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price)
 
 fit <- xgb.train(
   params = list(learning_rate = 0.1, objective = "reg:squarederror"), 
@@ -29,10 +31,11 @@ fit <- xgb.train(
 )
 
 ## -----------------------------------------------------------------------------
-X_small <- X[sample(nrow(X), 2000L), ]
+# Pick explanation data
+dia_small <- diamonds[sample(nrow(diamonds), 2000L), ]
 
-# X is the "explanation" dataset using the original factors
-shp <- shapviz(fit, X_pred = data.matrix(X_small), X = X_small)
+# We also pass feature data X with originally encoded values
+shp <- shapviz(fit, X_pred = data.matrix(dia_small[x]), X = dia_small)
 
 ## ---- dev = 'svg'-------------------------------------------------------------
 sv_waterfall(shp, row_id = 1L) +
