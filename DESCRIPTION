@@ -1,6 +1,6 @@
 Package: shapviz
 Title: SHAP Visualizations
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
     person("Michael", "Mayer", , "mayermichael79@gmail.com", role = c("aut", "cre"))
 Description: Visualizations for SHAP (SHapley Additive exPlanations), such
@@ -18,8 +18,8 @@ License: GPL (>= 2)
 Depends: R (>= 3.6.0)
 Encoding: UTF-8
 RoxygenNote: 7.2.1
-Imports: ggbeeswarm, ggfittext (>= 0.8.0), gggenes, ggplot2 (>= 3.0.0),
-        ggrepel, grid, rlang (>= 0.3.0), stats, utils, xgboost
+Imports: ggfittext (>= 0.8.0), gggenes, ggplot2 (>= 3.0.0), ggrepel,
+        grid, rlang (>= 0.3.0), stats, utils, xgboost
 Enhances: h2o, lightgbm
 Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
@@ -27,8 +27,8 @@ Config/testthat/edition: 3
 URL: https://github.com/mayer79/shapviz
 BugReports: https://github.com/mayer79/shapviz/issues
 NeedsCompilation: no
-Packaged: 2022-11-26 17:16:06 UTC; Michael
+Packaged: 2022-12-09 08:24:12 UTC; Michael
 Author: Michael Mayer [aut, cre]
 Maintainer: Michael Mayer <mayermichael79@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-11-26 17:30:02 UTC
+Date/Publication: 2022-12-09 08:50:01 UTC
