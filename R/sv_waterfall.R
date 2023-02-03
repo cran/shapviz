@@ -36,7 +36,7 @@
 #' @seealso \code{\link{sv_force}}
 #' @examples
 #' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50)
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50, nthread = 1)
 #' x <- shapviz(fit, X_pred = dtrain, X = iris[, -1])
 #' sv_waterfall(x)
 #' sv_waterfall(x, row_id = 123, max_display = 2, size = 9, fill_colors = 4:5)
@@ -126,7 +126,7 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
     p <- p +
       geom_segment(
         aes(x = to, xend = to, y = i, yend = .lag(i, lead = TRUE, default = m)),
-        size = 0.3,
+        linewidth = 0.3,
         linetype = 2
       )
   }
@@ -140,7 +140,7 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
         xend = full_range,
         y = c(m, 1),
         yend = c(m, 1) + m * c(0.075, -0.075) + 0.13 * c(1, -1),
-        size = 0.3,
+        linewidth = 0.3,
         linetype = 2
       ) +
       annotate(

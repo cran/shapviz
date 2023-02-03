@@ -60,3 +60,14 @@ sv_dependence(shp, v = "color", color_var = "auto")
 sv_dependence(shp, v = "carat", color_var = "auto", alpha = 0.2, size = 1) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2)))
 
+## -----------------------------------------------------------------------------
+shp_with_inter <- shapviz(
+  fit, X_pred = data.matrix(dia_small[x]), X = dia_small, interactions = TRUE
+)
+
+sv_dependence(shp_with_inter, v = "color", color_var = "cut", interactions = TRUE)
+
+## -----------------------------------------------------------------------------
+sv_interaction(shp_with_inter) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+

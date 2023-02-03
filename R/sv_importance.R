@@ -15,13 +15,8 @@
 #' Set to "no" in order to suppress plotting. In that case, the sorted
 #' SHAP feature importances of all variables are returned.
 #' @param max_display Maximum number of features (with highest importance) to plot.
-#' If there are more, the least important variables are collapsed to an "other" group:
-#' their SHAP values are added and their min-max-scaled feature values are added as
-#' well (and the resulting vector is min-max-scaled again).
-#' Set to \code{Inf} to show all features.
-#' Has no effect if \code{kind = "no"} or if \code{show_other = FALSE}.
-#' @param show_other If the number of features is larger than \code{max_display}:
-#' Should the "other" group be shown (default) or not?
+#' Set to \code{Inf} to show all features. Has no effect if \code{kind = "no"}.
+#' @param show_other Deprecated.
 #' @param fill Color used to fill the bars (only used if bars are shown).
 #' @param bar_width Relative width of the bars (only used if bars are shown).
 #' @param bee_width Relative width of the beeswarms (only used if beeswarm shown).
@@ -52,7 +47,7 @@
 #' @examples
 #' X_train <- data.matrix(iris[, -1])
 #' dtrain <- xgboost::xgb.DMatrix(X_train, label = iris[, 1])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50)
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50, nthread = 1)
 #' x <- shapviz(fit, X_pred = X_train)
 #' sv_importance(x)
 #' sv_importance(x, kind = "beeswarm", show_numbers = TRUE)
@@ -63,7 +58,6 @@
 #' x2 <- shapviz(S, X)
 #' sv_importance(x2)
 #' sv_importance(x2, max_display = 5)
-#' sv_importance(x2, max_display = 5, show_other = FALSE)
 sv_importance <- function(object, ...) {
   UseMethod("sv_importance")
 }
@@ -77,7 +71,7 @@ sv_importance.default <- function(object, ...) {
 #' @describeIn sv_importance SHAP importance plot for an object of class "shapviz".
 #' @export
 sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "no"),
-                                  max_display = 15L, show_other = TRUE,
+                                  max_display = 15L, show_other = NULL,
                                   fill = "#fca50a", bar_width = 2/3,
                                   bee_width = 0.4, bee_adjust = 0.5,
                                   viridis_args = getOption("shapviz.viridis_args"),
@@ -86,117 +80,77 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
                                   number_size = 3.2, ...) {
   stopifnot("format_fun must be a function" = is.function(format_fun))
   kind <- match.arg(kind)
-  if ("width" %in% names(list(...))) {
-    # To be removed in 0.5.0
-    warning("Passing 'width' via ... is deprecated. Use 'bar_width' or 'bee_width'.")
+  if (!is.null(show_other)) {
+    warning(
+      "The argument 'show_other' is deprecated and will be removed in version 0.6.0"
+    )
   }
-
   S <- get_shap_values(object)
-  X <- get_feature_values(object)
   imp <- .get_imp(S)
+  ord <- names(imp)
+
   if (kind == "no") {
     return(imp)
   }
 
-  # The next two lines would be more elegant, but require R >= 4.1
-  # X_scaled <- X
-  # X_scaled[] <- apply(data.matrix(X), 2L, FUN = .min_max_scale, simplify = FALSE)
-  X_tmp <- apply(data.matrix(X), 2L, FUN = .min_max_scale)
-  X_scaled <- as.data.frame(if (nrow(X) >= 2L) X_tmp else t(X_tmp))
-
-  # Deal with too many features -> important: "imp" is sorted
+  # Deal with too many features
   if (ncol(S) > max_display) {
-    if (!show_other) {
-      imp <- imp[seq_len(max_display)]
-      S <- S[, names(imp), drop = FALSE]
-      X_scaled <- X_scaled[names(imp)]
-    } else {
-      to_keep <- names(imp[seq_len(max_display - 1L)])
-      to_collapse <- setdiff(colnames(S), to_keep)
-
-      # Collapse scaled feature values
-      other_name <- paste("Sum of", length(to_collapse), "other")
-      collapsed <- .min_max_scale(rowSums(X_scaled[to_collapse]))
-      X_scaled <- X_scaled[to_keep]
-      X_scaled[[other_name]] <- collapsed
-
-      # Collapse SHAP values
-      S <- cbind(S[, to_keep, drop = FALSE], rowSums(S[, to_collapse, drop = FALSE]))
-      colnames(S) <- c(to_keep, other_name)
-
-      # Recalculate importances (only "other" is new/different)
-      imp <- .get_imp(S)
-    }
+    ord <- ord[seq_len(max_display)]
   }
 
-  imp_df <- data.frame(feature = stats::reorder(names(imp), imp), value = imp)
-
+  # ggplot will need to work with data.frame
+  imp_df <- data.frame(feature = factor(ord, rev(ord)), value = imp[ord])
   is_bar <- kind == "bar"
   if (is_bar) {
-    p <- ggplot(imp_df, aes(x = feature, y = value)) +
+    p <- ggplot(imp_df, aes(x = value, y = feature)) +
       geom_bar(fill = fill, width = bar_width, stat = "identity", ...) +
-      labs(x = element_blank(), y = "mean(|SHAP value|)")
+      labs(x = "mean(|SHAP value|)", y = element_blank())
   } else {
-    # Transpose S and X_scaled
-    S <- as.data.frame(S)
-    stopifnot(colnames(S) == colnames(X_scaled)) # to be absolutely sure...
-    S_long <- utils::stack(S)
-    df <- data.frame(
-      feature = stats::reorder(S_long$ind, abs(S_long$values)),
-      value = S_long$values,
-      color = utils::stack(X_scaled)$values
+    # Prepare data.frame for beeswarm plot
+    S <- S[, ord, drop = FALSE]
+    X <- .scale_X(get_feature_values(object)[ord])
+    df <- transform(
+      as.data.frame.table(S, responseName = "value"),
+      feature = factor(Var2, levels = rev(ord)),
+      color = as.data.frame.table(X)$Freq
     )
 
-    # Put together color scale and deal with special case of only one unique v value
-    if (!is.null(color_bar_title)) {
-      nv <- length(unique(df$color))
-      viridis_args_plus <-
-        list(
-          breaks = if (nv >= 2L) 0:1 else 0.5,
-          labels = if (nv >= 2L) c("Low", "High") else "Avg",
-          guide = guide_colorbar(
-            barwidth = 0.4,
-            barheight = 8,
-            title.theme = element_text(angle = 90, hjust = 0.5, vjust = 0),
-            title.position = "left"
-          )
-        )
-    } else {
-      viridis_args_plus <- list(guide = "none")
-    }
-
-    p <- ggplot(df, aes(x = feature, y = value))
+    p <- ggplot(df, aes(x = value, y = feature))
     if (kind == "both") {
       p <- p +
         geom_bar(data = imp_df, fill = fill, width = bar_width, stat = "identity")
     }
     p <- p +
-      geom_hline(yintercept = 0, color = "darkgray") +
+      geom_vline(xintercept = 0, color = "darkgray") +
       geom_point(
         aes(color = color),
         position = position_bee(width = bee_width, adjust = bee_adjust),
         ...
       ) +
-      do.call(scale_color_viridis_c, c(viridis_args, viridis_args_plus)) +
-      labs(x = element_blank(), y = "SHAP value", color = color_bar_title)
+      .get_color_scale(
+        viridis_args = viridis_args,
+        bar = !is.null(color_bar_title),
+        ncol = length(unique(df$color))   # Special case of constant feature values
+      ) +
+      labs(x = "SHAP value", y = element_blank(), color = color_bar_title)
   }
   if (show_numbers) {
     p <- p +
       geom_text(
         data = imp_df,
         aes(
-          y = if (is_bar) value + max(value) / 60 else
+          x = if (is_bar) value + max(value) / 60 else
             min(df$value) - diff(range(df$value)) / 20,
           label = format_fun(value)
         ),
         hjust = !is_bar,
         size = number_size
       ) +
-      scale_y_continuous(
+      scale_x_continuous(
         expand = expansion(mult = 0.05 + c(0.12 *!is_bar, 0.09 * is_bar))
       )
   }
-  p + coord_flip(clip = "off")
+  p
 }
 
 # Helper functions
@@ -207,12 +161,38 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
     z[!is.na(z)] <- 0.5
     return(z)
   }
-  return((z - r[1L]) /(r[2L] - r[1L]))
+  (z - r[1L]) /(r[2L] - r[1L])
 }
 
 .get_imp <- function(z) {
   sort(colMeans(abs(z)), decreasing = TRUE)
 }
+
+.scale_X <- function(X) {
+  X_scaled <- apply(data.matrix(X), 2L, FUN = .min_max_scale)
+  if (nrow(X) == 1L) t(X_scaled) else X_scaled
+}
+
+# ncol < 2 treats the special case of constant feature values (e.g., if n = 1)
+.get_color_scale <- function(viridis_args, bar = TRUE, ncol = 2L) {
+  if (bar) {
+    viridis_args_plus <-
+      list(
+        breaks = if (ncol >= 2L) 0:1 else 0.5,
+        labels = if (ncol >= 2L) c("Low", "High") else "Avg",
+        guide = guide_colorbar(
+          barwidth = 0.4,
+          barheight = 8,
+          title.theme = element_text(angle = 90, hjust = 0.5, vjust = 0),
+          title.position = "left"
+        )
+      )
+  } else {
+    viridis_args_plus <- list(guide = "none")
+  }
+  return(do.call(scale_color_viridis_c, c(viridis_args, viridis_args_plus)))
+}
+
 
 #' Number Formatter
 #'
@@ -233,7 +213,7 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
 #' format_max(y)
 #' format_max(y, digits = 5)
 format_max <- function(x, digits = 4L, ...) {
-  mx <- trunc(log10(max(abs(x)))) + 1L
+  mx <- trunc(log10(max(abs(x), na.rm = TRUE))) + 1L
   x_rounded <- round(x, pmax(0L, digits - mx))
   format(x_rounded, scientific = FALSE, trim = TRUE, ...)
 }
