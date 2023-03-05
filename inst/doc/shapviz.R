@@ -54,10 +54,10 @@ sv_importance(shp, kind = "beeswarm")
 # Or both!
 sv_importance(shp, kind = "both", show_numbers = TRUE, bee_width = 0.2)
 
-## -----------------------------------------------------------------------------
-sv_dependence(shp, v = "color", color_var = "auto")
+## ---- dev = 'svg'-------------------------------------------------------------
+sv_dependence(shp, v = "color")
 
-sv_dependence(shp, v = "carat", color_var = "auto", alpha = 0.2, size = 1) +
+sv_dependence(shp, v = "carat", alpha = 0.2, size = 1) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2)))
 
 ## -----------------------------------------------------------------------------
