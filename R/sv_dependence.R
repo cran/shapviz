@@ -1,47 +1,60 @@
 #' SHAP Dependence Plot
 #'
-#' Scatter plot of the SHAP values of a feature against its feature values.
+#' Scatterplot of the SHAP values of a feature against its feature values.
 #' If SHAP interaction values are available, setting \code{interactions = TRUE} allows
 #' to focus on pure interaction effects (multiplied by two) or on pure main effects.
 #'
 #' @importFrom rlang .data
-#' @param object An object of class "shapviz".
+#' @param object An object of class "(m)shapviz".
 #' @param v Column name of feature to be plotted.
+#' Can be a vector/list if \code{object} is of class "shapviz".
 #' @param color_var Feature name to be used on the color scale to investigate interactions.
 #' The default ("auto") uses SHAP interaction values (if available) or a heuristic to
 #' select the strongest interacting feature. Set to \code{NULL} to not use the color axis.
+#' Can be a vector/list if \code{object} is of class "shapviz".
 #' @param color Color to be used if \code{color_var = NULL}.
+#' Can be a vector/list if \code{v} is a vector.
 #' @param viridis_args List of viridis color scale arguments, see
 #' \code{?ggplot2::scale_color_viridis_c()}. The default points to the global
 #' option \code{shapviz.viridis_args}, which corresponds to
 #' \code{list(begin = 0.25, end = 0.85, option = "inferno")}.
 #' These values are passed to \code{ggplot2::scale_color_viridis_*()}.
 #' For example, to switch to a standard viridis scale, you can either change the default
-#' with \code{options(shapviz.viridis_args = NULL)} or set \code{viridis_args = NULL}.
+#' with \code{options(shapviz.viridis_args = list())} or set \code{viridis_args = list()}.
 #' Only relevant if \code{color_var} is not \code{NULL}.
 #' @param jitter_width The amount of horizontal jitter. The default (\code{NULL}) will
 #' use a value of 0.2 in case \code{v} is discrete, and no jitter otherwise.
 #' (Numeric variables are considered discrete if they have at most 7 unique values.)
+#' Can be a vector/list if \code{v} is a vector.
 #' @param interactions Should SHAP interaction values be plotted? Default is \code{FALSE}.
 #' Requires SHAP interaction values. If \code{color_var = NULL} (or it is equal to
 #' \code{v}), the pure main effect of \code{v} is visualized. Otherwise, twice the SHAP
 #' interaction values between \code{v} and the \code{color_var} are plotted.
 #' @param ... Arguments passed to \code{geom_jitter()}.
-#' @return An object of class \code{ggplot} representing a dependence plot.
-#' @export
-#' @seealso \code{\link{potential_interactions}}
+#' @return An object of class \code{ggplot} (or "patchwork") representing a dependence plot.
 #' @examples
-#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50, nthread = 1)
+#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1L]), label = iris[, 1L])
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
 #' x <- shapviz(fit, X_pred = dtrain, X = iris)
 #' sv_dependence(x, "Petal.Length")
 #' sv_dependence(x, "Petal.Length", color_var = "Species")
 #' sv_dependence(x, "Petal.Length", color_var = NULL)
+#' sv_dependence(x, c("Species", "Petal.Length"))
+#' sv_dependence(x, "Petal.Width", color_var = c("Species", "Petal.Length"))
 #'
 #' # SHAP interaction values
 #' x2 <- shapviz(fit, X_pred = dtrain, X = iris, interactions = TRUE)
 #' sv_dependence(x2, "Petal.Length", interactions = TRUE)
-#' sv_dependence(x2, "Petal.Length", color_var = NULL, interactions = TRUE)
+#' sv_dependence(x2, c("Petal.Length", "Species"), color_var = NULL, interactions = TRUE)
+#'
+#' # Show main effect of "Petal.Length" for setosa and virginica separately
+#' mx <- c(
+#'   setosa = x2[x2$X$Species == "setosa"],
+#'   virginica = x2[x2$X$Species == "virginica"]
+#' )
+#' sv_dependence(mx, "Petal.Length", color_var = NULL, interactions = TRUE)
+#' @export
+#' @seealso \code{\link{potential_interactions}}
 sv_dependence <- function(object, ...) {
   UseMethod("sv_dependence")
 }
@@ -52,18 +65,45 @@ sv_dependence.default <- function(object, ...) {
   stop("No default method available.")
 }
 
-#' @describeIn sv_dependence SHAP dependence plot for shp object.
+#' @describeIn sv_dependence SHAP dependence plot for "shapviz" object.
 #' @export
 sv_dependence.shapviz <- function(object, v, color_var = "auto", color = "#3b528b",
                                   viridis_args = getOption("shapviz.viridis_args"),
                                   jitter_width = NULL, interactions = FALSE, ...) {
+  p <- length(v)
+  if (p > 1L || length(color_var) > 1L) {
+    if (is.null(color_var)) {
+      color_var <- replicate(p, NULL)
+    }
+    if (is.null(jitter_width)) {
+      jitter_width <- replicate(p, NULL)
+    }
+    plot_list <- mapply(
+      FUN = sv_dependence,
+      v = v,
+      color_var = color_var,
+      color = color,
+      jitter_width = jitter_width,
+      MoreArgs = list(
+        object = object,
+        viridis_args = viridis_args,
+        interactions = interactions,
+        ...
+      ),
+      SIMPLIFY = FALSE
+    )
+    nms <- if (length(v) > 1L) v
+    plot_list <- add_titles(plot_list, nms = nms)  # see sv_waterfall()
+    return(patchwork::wrap_plots(plot_list))
+  }
+
   S <- get_shap_values(object)
   X <- get_feature_values(object)
   S_inter <- get_shap_interactions(object)
+  nms <- colnames(object)
   stopifnot(
-    length(v) <= 1L,
-    v %in% colnames(S),
-    is.null(color_var) || (color_var %in% c("auto", colnames(S)))
+    v %in% nms,
+    is.null(color_var) || (color_var %in% c("auto", nms))
   )
   if (interactions && is.null(S_inter)) {
     stop("No SHAP interaction values available in 'object'.")
@@ -75,7 +115,7 @@ sv_dependence.shapviz <- function(object, v, color_var = "auto", color = "#3b528
   }
 
   # Set color value
-  if (!is.null(color_var) && color_var == "auto" && !("auto" %in% colnames(S))) {
+  if (!is.null(color_var) && color_var == "auto" && !("auto" %in% nms)) {
     scores <- potential_interactions(object, v)
     color_var <- names(scores)[1L]  # NULL if p = 1L
   }
@@ -86,7 +126,7 @@ sv_dependence.shapviz <- function(object, v, color_var = "auto", color = "#3b528
     if (color_var == v) {
       y_lab <- "SHAP main effect"
     } else {
-      y_lab <- "SHAP interaction value"
+      y_lab <- "SHAP interaction"
     }
     s <- S_inter[, v, color_var]
     if (color_var != v) {
@@ -111,14 +151,39 @@ sv_dependence.shapviz <- function(object, v, color_var = "auto", color = "#3b528
     vir <- scale_color_viridis_c
   }
   if (is.null(viridis_args)) {
-    viridis_args <- list(NULL)
+    viridis_args <- list()
   }
   ggplot(dat, aes(x = .data[[v]], y = shap, color = .data[[color_var]])) +
     geom_jitter(width = jitter_width, height = 0, ...) +
     ylab(y_lab) +
-    do.call(vir, viridis_args)
+    do.call(vir, viridis_args) +
+    theme(legend.box.spacing = grid::unit(0, "pt"))
 }
 
+#' @describeIn sv_dependence SHAP dependence plot for "mshapviz" object.
+#' @export
+sv_dependence.mshapviz <- function(object, v, color_var = "auto", color = "#3b528b",
+                                   viridis_args = getOption("shapviz.viridis_args"),
+                                   jitter_width = NULL, interactions = FALSE, ...) {
+  stopifnot(
+    length(v) == 1L,
+    length(color_var) <= 1L
+  )
+  plot_list <- lapply(
+    object,
+    FUN = sv_dependence,
+    # Argument list (simplify via match.call() or some rlang magic?)
+    v = v,
+    color_var = color_var,
+    color = color,
+    viridis_args = viridis_args,
+    jitter_width = jitter_width,
+    interactions = interactions,
+    ...
+  )
+  plot_list <- add_titles(plot_list, nms = names(object))  # see sv_waterfall()
+  patchwork::wrap_plots(plot_list)
+}
 
 #' Interaction Strength
 #'
@@ -146,10 +211,11 @@ potential_interactions <- function(obj, v) {
   S <- get_shap_values(obj)
   S_inter <- get_shap_interactions(obj)
   X <- get_feature_values(obj)
-  v_other <- setdiff(colnames(X), v)
-  stopifnot(v %in% colnames(X))
+  nms <- colnames(obj)
+  v_other <- setdiff(nms, v)
+  stopifnot(v %in% nms)
 
-  if (ncol(S) < 2L) {
+  if (ncol(obj) <= 1L) {
     return(NULL)
   }
 

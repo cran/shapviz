@@ -16,36 +16,34 @@ library(xgboost)
 
 set.seed(3653)
 
-# Turn ordinal factors into normal ones
+# Turn ordinal factors into normal ones (required for some of the examples)
 ord <- c("clarity", "cut", "color")
 diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
 
 # Fit XGBoost model
 x <- c("carat", "clarity", "cut", "color")
 dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price)
-
-fit <- xgb.train(
-  params = list(learning_rate = 0.1, objective = "reg:squarederror"), 
-  data = dtrain,
-  nrounds = 65L
-)
+fit <- xgb.train(params = list(learning_rate = 0.1), data = dtrain, nrounds = 65L)
 
 ## -----------------------------------------------------------------------------
-# Pick explanation data
+# Explanation data
 dia_small <- diamonds[sample(nrow(diamonds), 2000L), ]
 
-# We also pass feature data X with originally encoded values
 shp <- shapviz(fit, X_pred = data.matrix(dia_small[x]), X = dia_small)
 
-## ---- dev = 'svg'-------------------------------------------------------------
+## -----------------------------------------------------------------------------
 sv_waterfall(shp, row_id = 1L) +
   theme(axis.text = element_text(size = 11))
 
-## ---- fig.asp = .5, dev = 'svg'-----------------------------------------------
+## ---- fig.asp = .5------------------------------------------------------------
 sv_force(shp, row_id = 1L)
 
 ## -----------------------------------------------------------------------------
-# A bar plot of mean absolute SHAP values
+sv_waterfall(shp, shp$X$color == "D") +
+  theme(axis.text = element_text(size = 11))
+
+## -----------------------------------------------------------------------------
+# A barplot of mean absolute SHAP values
 sv_importance(shp)
 
 # A beeswarm plot
@@ -54,20 +52,32 @@ sv_importance(shp, kind = "beeswarm")
 # Or both!
 sv_importance(shp, kind = "both", show_numbers = TRUE, bee_width = 0.2)
 
-## ---- dev = 'svg'-------------------------------------------------------------
+## -----------------------------------------------------------------------------
 sv_dependence(shp, v = "color")
 
 sv_dependence(shp, v = "carat", alpha = 0.2, size = 1) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2)))
 
+## ---- fig.height=5.5, fig.width=7---------------------------------------------
+library(patchwork)  # to use the & operator
+
+sv_dependence(shp, v = x) &
+  theme_gray(base_size = 9) &
+  ylim(-5000, 15000)
+
 ## -----------------------------------------------------------------------------
-shp_with_inter <- shapviz(
+shp_i <- shapviz(
   fit, X_pred = data.matrix(dia_small[x]), X = dia_small, interactions = TRUE
 )
 
-sv_dependence(shp_with_inter, v = "color", color_var = "cut", interactions = TRUE)
+sv_dependence(shp_i, v = "color", color_var = "cut", interactions = TRUE)
 
 ## -----------------------------------------------------------------------------
-sv_interaction(shp_with_inter) +
+sv_dependence(
+  shp_i, v = "carat", color_var = x, interactions = TRUE) &
+  ylim(-6000, 13000)
+
+## -----------------------------------------------------------------------------
+sv_interaction(shp_i) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 

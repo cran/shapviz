@@ -1,11 +1,14 @@
 #' SHAP Waterfall Plot
 #'
-#' Creates a waterfall plot of SHAP values of one single observation. The value of
+#' Creates a waterfall plot of SHAP values of one observation. The value of
 #' f(x) denotes the prediction on the SHAP scale, while E(f(x)) refers to the baseline
 #' SHAP value. The plot has to be read from bottom to top.
+#' If multiple observations are selected, their SHAP values and predictions are averaged.
 #'
-#' @param object An object of class "shapviz".
-#' @param row_id A single row number to plot.
+#' @param object An object of class "(m)shapviz".
+#' @param row_id Subset of observations to plot, typically a single row number.
+#' If more than one row is selected, SHAP values are averaged, and feature values
+#' are shown only when they are unique.
 #' @param max_display Maximum number of features (with largest absolute SHAP values)
 #' should be plotted? If there are more features, they will be collapsed to one feature.
 #' The default is ten in order to not overload the plot. Set to \code{Inf} to show
@@ -31,20 +34,33 @@
 #' @param ... Arguments passed to \code{ggfittext::geom_fit_text()}.
 #' For example, \code{size = 9} will use fixed text size in the bars and \code{size = 0}
 #' will altogether suppress adding text to the bars.
-#' @return An object of class "ggplot" representing a waterfall plot.
-#' @export
-#' @seealso \code{\link{sv_force}}
+#' @return An object of class "ggplot" (or "patchwork") representing a waterfall plot.
 #' @examples
-#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50, nthread = 1)
+#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1L]), label = iris[, 1L])
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
 #' x <- shapviz(fit, X_pred = dtrain, X = iris[, -1])
 #' sv_waterfall(x)
-#' sv_waterfall(x, row_id = 123, max_display = 2, size = 9, fill_colors = 4:5)
+#' sv_waterfall(x, row_id = 123, max_display = 2L, size = 9, fill_colors = 4:5)
 #'
-#' X <- as.data.frame(matrix(1:100, nrow = 10))
+#' # Ordered by colnames(x), combined with max_display
+#' sv_waterfall(
+#'   x[, sort(colnames(x))], order_fun = function(s) length(s):1, max_display = 3L
+#' )
+#'
+#' # Aggregate over all observations with Petal.Length == 1.4
+#' sv_waterfall(x, row_id = x$X$Petal.Length == 1.4)
+#'
+#' # More features
+#' X <- as.data.frame(matrix(1:100, nrow = 10L))
 #' S <- as.matrix(X)
 #' shp <- shapviz(S, X)
 #' sv_waterfall(shp)
+#'
+#' # Combine two waterfall plots via {patchwork}
+#' sv_waterfall(c(Obs1 = x[1L], Obs2 = x[2L])) +
+#'   patchwork::plot_layout(ncol = 1L)
+#' @export
+#' @seealso \code{\link{sv_force}}
 sv_waterfall <- function(object, ...) {
   UseMethod("sv_waterfall")
 }
@@ -65,20 +81,17 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
                                  contrast = TRUE, show_connection = TRUE,
                                  show_annotation = TRUE, annotation_size = 3.2, ...) {
   stopifnot(
-    "Only one row number can be passed" = length(row_id) == 1L,
     "Exactly two fill colors must be passed" = length(fill_colors) == 2L,
     "format_shap must be a function" = is.function(format_shap),
     "format_feat must be a function" = is.function(format_feat),
     "order_fun must be a function" = is.function(order_fun)
   )
-
-  X <- get_feature_values(object)[row_id, ]
-  S <- get_shap_values(object)[row_id, ]
+  object <- object[row_id, ]
   b <- get_baseline(object)
-  dat <- data.frame(S = S, label = paste(names(X), format_feat(X), sep = " = "))
-
-  # Collapse unimportant features
-  dat <- .collapse(dat, S, max_display = max_display)
+  dat <- .make_dat(object, format_feat = format_feat, sep = " = ")
+  if (ncol(object) > max_display) {
+    dat <- .collapse(dat, max_display = max_display)
+  }
   m <- nrow(dat)
 
   # Add order dependent columns
@@ -157,6 +170,36 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
   p
 }
 
+#' @describeIn sv_waterfall SHAP waterfall plot for an object of class "mshapviz".
+#' @export
+sv_waterfall.mshapviz <- function(object, row_id = 1L, max_display = 10L,
+                                  order_fun = function(s) order(abs(s)),
+                                  fill_colors = c("#f7d13d", "#a52c60"),
+                                  format_shap = getOption("shapviz.format_shap"),
+                                  format_feat = getOption("shapviz.format_feat"),
+                                  contrast = TRUE, show_connection = TRUE,
+                                  show_annotation = TRUE, annotation_size = 3.2, ...) {
+  plot_list <- lapply(
+    object,
+    FUN = sv_waterfall,
+    # Argument list (simplify via match.call() or some rlang magic?)
+    row_id = row_id,
+    max_display = max_display,
+    order_fun = order_fun,
+    fill_colors = fill_colors,
+    format_shap = format_shap,
+    format_feat = format_feat,
+    contrast = contrast,
+    show_connection = show_connection,
+    show_annotation = show_annotation,
+    annotation_size = annotation_size,
+    ...
+  )
+  plot_list <- add_titles(plot_list, nms = names(object))
+  patchwork::wrap_plots(plot_list)
+}
+
+# Helper functions for sv_waterfall() and sv_force()
 .lag <- function(z, default = NA, lead = FALSE) {
   n <- length(z)
   if (n < 2L) {
@@ -168,19 +211,45 @@ sv_waterfall.shapviz <- function(object, row_id = 1L, max_display = 10L,
   c(default, z[1L:(n - 1L)])
 }
 
-.collapse <- function(dat, S, max_display) {
-  ok <- utils::head(names(sort(abs(S), decreasing = TRUE)), max_display - 1L)
-  if (length(ok) < nrow(dat) - 1L) {
-    bad <- setdiff(names(S), ok)
-    dat <- rbind(
-      dat[ok, ],
-      data.frame(
-        S = sum(dat[bad, "S"]),
-        label = paste(length(bad), "other features"),
-        row.names = "other"
-      )
-    )
+# Turns "shapviz" object into a two-column data.frame
+.make_dat <- function(object, format_feat, sep = " = ") {
+  X <- get_feature_values(object)
+  S <- get_shap_values(object)
+  if (nrow(object) == 1L) {
+    S <- drop(S)
+    label <- paste(colnames(X), format_feat(X), sep = sep)
+  } else {
+    message("Aggregating SHAP values over ", nrow(object), " observations")
+    S <- colMeans(S)
+    J <- vapply(X, function(z) length(unique(z)) <= 1L, FUN.VALUE = TRUE)
+    label <- colnames(X)
+    if (any(J)) {
+      label[J] <- paste(label[J], format_feat(X[1L, J]), sep = sep)
+    }
   }
-  dat
+  data.frame(S = S, label = label)
 }
 
+# Used to combine unimportant rows in dat. dat has two columns: S and label
+# Note: rownames(dat) = colnames(object)
+.collapse <- function(dat, max_display) {
+  m_drop <- nrow(dat) - max_display + 1L
+  drop_cols <- rownames(dat)[order(abs(dat$S))[seq_len(m_drop)]]
+  keep_cols <- setdiff(rownames(dat), drop_cols)
+  rbind(
+    dat[keep_cols, ],
+    data.frame(
+      S = sum(dat[drop_cols, "S"]),
+      label = paste(length(drop_cols), "other features"),
+      row.names = "other"
+    )
+  )
+}
+
+# Adds non-null titles "nms" to list of ggplots
+add_titles <- function(a_list, nms = NULL) {
+  if (is.null(nms)) {
+    return(a_list)
+  }
+  mapply(function(p, nm) p + ggplot2::ggtitle(nm), a_list, nms, SIMPLIFY = FALSE)
+}

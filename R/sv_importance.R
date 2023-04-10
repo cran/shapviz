@@ -10,13 +10,12 @@
 #' For both types of plots, the features are sorted in decreasing
 #' order of importance. The two types of plots can also be combined.
 #'
-#' @param object An object of class "shapviz".
+#' @param object An object of class "(m)shapviz".
 #' @param kind Should a "bar" plot (the default), a "beeswarm" plot, or "both" be shown?
 #' Set to "no" in order to suppress plotting. In that case, the sorted
 #' SHAP feature importances of all variables are returned.
 #' @param max_display Maximum number of features (with highest importance) to plot.
 #' Set to \code{Inf} to show all features. Has no effect if \code{kind = "no"}.
-#' @param show_other Deprecated.
 #' @param fill Color used to fill the bars (only used if bars are shown).
 #' @param bar_width Relative width of the bars (only used if bars are shown).
 #' @param bee_width Relative width of the beeswarms (only used if beeswarm shown).
@@ -28,7 +27,7 @@
 #' corresponds to \code{list(begin = 0.25, end = 0.85, option = "inferno")}.
 #' These values are passed to \code{ggplot2::scale_color_viridis_c()}.
 #' For example, to switch to a standard viridis scale, you can either change the default
-#' with \code{options(shapviz.viridis_args = NULL)} or set \code{viridis_args = NULL}.
+#' with \code{options(shapviz.viridis_args = list())} or set \code{viridis_args = list()}.
 #' @param color_bar_title Title of color bar of the beeswarm plot.
 #' Set to \code{NULL} to hide the color bar altogether.
 #' @param show_numbers Should SHAP feature importances be printed?
@@ -41,23 +40,25 @@
 #' to \code{geom_point()} otherwise.
 #' For instance, passing \code{alpha = 0.2} will produce semi-transparent beeswarms,
 #' and setting \code{size = 3} will produce larger dots.
-#' @return A "ggplot" object representing an importance plot, or - if
-#' \code{kind = "no"} - a named numeric vector of sorted SHAP feature importances.
-#' @export
+#' @return A "ggplot" (or "patchwork") object representing an importance plot, or - if
+#' \code{kind = "no"} - a named numeric vector of sorted SHAP feature importances
+#' (or a list of such vectors in case of an object of class "mshapviz").
 #' @examples
-#' X_train <- data.matrix(iris[, -1])
-#' dtrain <- xgboost::xgb.DMatrix(X_train, label = iris[, 1])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50, nthread = 1)
+#' X_train <- data.matrix(iris[, -1L])
+#' dtrain <- xgboost::xgb.DMatrix(X_train, label = iris[, 1L])
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
 #' x <- shapviz(fit, X_pred = X_train)
 #' sv_importance(x)
 #' sv_importance(x, kind = "beeswarm", show_numbers = TRUE)
 #' sv_importance(x, kind = "no")
 #'
-#' X <- data.frame(matrix(rnorm(1000), ncol = 20))
+#' X <- data.frame(matrix(rnorm(1000), ncol = 20L))
 #' S <- as.matrix(X)
 #' x2 <- shapviz(S, X)
 #' sv_importance(x2)
-#' sv_importance(x2, max_display = 5)
+#' sv_importance(x2, max_display = 5L)
+#' @seealso \code{\link{sv_interaction}}
+#' @export
 sv_importance <- function(object, ...) {
   UseMethod("sv_importance")
 }
@@ -71,8 +72,7 @@ sv_importance.default <- function(object, ...) {
 #' @describeIn sv_importance SHAP importance plot for an object of class "shapviz".
 #' @export
 sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "no"),
-                                  max_display = 15L, show_other = NULL,
-                                  fill = "#fca50a", bar_width = 2/3,
+                                  max_display = 15L, fill = "#fca50a", bar_width = 2/3,
                                   bee_width = 0.4, bee_adjust = 0.5,
                                   viridis_args = getOption("shapviz.viridis_args"),
                                   color_bar_title = "Feature value",
@@ -80,24 +80,18 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
                                   number_size = 3.2, ...) {
   stopifnot("format_fun must be a function" = is.function(format_fun))
   kind <- match.arg(kind)
-  if (!is.null(show_other)) {
-    warning(
-      "The argument 'show_other' is deprecated and will be removed in version 0.6.0"
-    )
-  }
-  S <- get_shap_values(object)
-  imp <- .get_imp(S)
+  imp <- .get_imp(get_shap_values(object))
 
   if (kind == "no") {
     return(imp)
   }
 
   # Deal with too many features
-  if (ncol(S) > max_display) {
+  if (ncol(object) > max_display) {
     imp <- imp[seq_len(max_display)]
   }
-
   ord <- names(imp)
+  object <- object[, ord]  # not required for kind = "bar"
 
   # ggplot will need to work with data.frame
   imp_df <- data.frame(feature = factor(ord, rev(ord)), value = imp)
@@ -108,8 +102,8 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
       labs(x = "mean(|SHAP value|)", y = element_blank())
   } else {
     # Prepare data.frame for beeswarm plot
-    S <- S[, ord, drop = FALSE]
-    X <- .scale_X(get_feature_values(object)[ord])
+    S <- get_shap_values(object)
+    X <- .scale_X(get_feature_values(object))
     df <- transform(
       as.data.frame.table(S, responseName = "value"),
       feature = factor(Var2, levels = rev(ord)),
@@ -133,7 +127,8 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
         bar = !is.null(color_bar_title),
         ncol = length(unique(df$color))   # Special case of constant feature values
       ) +
-      labs(x = "SHAP value", y = element_blank(), color = color_bar_title)
+      labs(x = "SHAP value", y = element_blank(), color = color_bar_title) +
+      theme(legend.box.spacing = grid::unit(0, "pt"))
   }
   if (show_numbers) {
     p <- p +
@@ -152,6 +147,41 @@ sv_importance.shapviz <- function(object, kind = c("bar", "beeswarm", "both", "n
       )
   }
   p
+}
+
+#' @describeIn sv_importance SHAP importance plot for an object of class "mshapviz".
+#' @export
+sv_importance.mshapviz <- function(object, kind = c("bar", "beeswarm", "both", "no"),
+                                   max_display = 15L, fill = "#fca50a", bar_width = 2/3,
+                                   bee_width = 0.4, bee_adjust = 0.5,
+                                   viridis_args = getOption("shapviz.viridis_args"),
+                                   color_bar_title = "Feature value",
+                                   show_numbers = FALSE, format_fun = format_max,
+                                   number_size = 3.2, ...) {
+  kind <- match.arg(kind)
+
+  plot_list <- lapply(
+    object,
+    FUN = sv_importance,
+    # Argument list (simplify via match.call() or some rlang magic?)
+    kind = kind,
+    max_display = max_display,
+    fill = fill,
+    bar_width = bar_width,
+    bee_width = bee_width,
+    bee_adjust = bee_adjust,
+    viridis_args = viridis_args,
+    color_bar_title = color_bar_title,
+    show_numbers = show_numbers,
+    format_fun = format_fun,
+    number_size = number_size,
+    ...
+  )
+  if (kind == "no") {
+    return(plot_list)
+  }
+  plot_list <- add_titles(plot_list, nms = names(object))  # see sv_waterfall()
+  patchwork::wrap_plots(plot_list)
 }
 
 # Helper functions
