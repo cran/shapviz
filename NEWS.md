@@ -1,3 +1,15 @@
+# shapviz 0.8.0
+
+## API improvement
+
+- For (upcoming) {fastshap} version >0.0.7, `fastshap::explain()` offers the option `shap_only`. To conveniently construct the "shapviz" object, use `shapviz(fastshap::explain(..., shap_only = FALSE))`. This not only passes the SHAP matrix but also the feature data and the baseline. Thanks, Brandon Greenwell!
+
+## Documentation
+
+- Better help files
+- Switched from "import ggplot2" to "ggplot2::function" code style
+- Vignette "Multiple 'shapviz' objects": Fixed mistake in Random Forest + Kernel SHAP example
+
 # shapviz 0.7.0
 
 ## Milestone: Working with multiple 'shapviz' objects

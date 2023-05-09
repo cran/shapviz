@@ -1,35 +1,15 @@
 #' SHAP Force Plot
 #'
-#' Creates a force plot of SHAP values of one observation. The value of
-#' f(x) denotes the prediction on the SHAP scale, while E(f(x)) refers to the baseline
-#' SHAP value.
-#' If multiple observations are selected, their SHAP values and predictions are averaged.
+#' Creates a force plot of SHAP values of one observation. If multiple
+#' observations are selected, their SHAP values and predictions are averaged.
 #'
-#' @param object An object of class "(m)shapviz".
-#' @param row_id Subset of observations to plot, typically a single row number.
-#' If more than one row is selected, SHAP values are averaged, and feature values
-#' are shown only when they are unique.
-#' @param max_display Maximum number of features (with largest absolute SHAP values)
-#' should be plotted? If there are more features, they will be collapsed to one feature.
-#' Set to \code{Inf} to show all features.
-#' @param fill_colors A vector of exactly two fill colors: the first for positive
-#' SHAP values, the other for negative ones.
-#' @param format_shap Function used to format SHAP values. The default uses the
-#' global option \code{shapviz.format_shap}, which equals to
-#' \code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.
-#' @param format_feat Function used to format numeric feature values. The default uses
-#' the global option \code{shapviz.format_feat}, which equals to
-#' \code{function(z) prettyNum(z, digits = 3, scientific = FALSE)} by default.
-#' @param contrast Logical flag that detemines whether to use white text in dark arrows.
-#' Default is \code{TRUE}.
-#' @param bar_label_size Size of text used to describe bars.
-#' (via \code{ggrepel::geom_text_repel()}).
-#' @param show_annotation Should "f(x)" and "E(f(x))" be plotted? Default is \code{TRUE}.
-#' @param annotation_size Size of the annotation text (f(x)=... and E(f(x))=...).
-#' @param ... Arguments passed to \code{ggfittext::geom_fit_text()}.
-#' For example, \code{size = 9} will use fixed text size in the bars and \code{size = 0}
-#' will altogether suppress adding text to the bars.
-#' @return An object of class "ggplot" (or "patchwork") representing a force plot.
+#' f(x) denotes the prediction on the SHAP scale, while E(f(x)) refers to the
+#' baseline SHAP value.
+#'
+#' @inheritParams sv_waterfall
+#' @param bar_label_size Size of text used to describe bars
+#'   (via [ggrepel::geom_text_repel()]).
+#' @returns An object of class "ggplot" (or "patchwork") representing a force plot.
 #' @examples
 #' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1L]), label = iris[, 1L])
 #' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
@@ -43,18 +23,20 @@
 #' # Combine two force plots via {patchwork}
 #' sv_force(c(Obs1 = x[1L], Obs2 = x[2L]))
 #' @export
-#' @seealso \code{\link{sv_waterfall}}
+#' @seealso [sv_waterfall()]
 sv_force <- function(object, ...) {
   UseMethod("sv_force")
 }
 
-#' @describeIn sv_force Default method.
+#' @describeIn sv_force
+#'   Default method.
 #' @export
 sv_force.default <- function(object, ...) {
   stop("No default method available.")
 }
 
-#' @describeIn sv_force SHAP force plot for object of class "shapviz".
+#' @describeIn sv_force
+#'   SHAP force plot for object of class "shapviz".
 #' @export
 sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
                              fill_colors = c("#f7d13d", "#a52c60"),
@@ -92,9 +74,11 @@ sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
   b_pred <- c(b, pred)
   height <- grid::unit(0.17, "npc")
 
-  p <- ggplot(
+  p <- ggplot2::ggplot(
     dat,
-    aes(xmin = from, xmax = to, y = id, fill = factor(S < 0, levels = c(FALSE, TRUE)))
+    ggplot2::aes(
+      xmin = from, xmax = to, y = id, fill = factor(S < 0, levels = c(FALSE, TRUE))
+    )
   ) +
     gggenes::geom_gene_arrow(
       show.legend = FALSE,
@@ -103,7 +87,7 @@ sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
       arrowhead_height = height
     ) +
     ggrepel::geom_text_repel(
-      aes(x = (from + to) / 2, y = as.numeric(id) + 0.08, label = label),
+      ggplot2::aes(x = (from + to) / 2, y = as.numeric(id) + 0.08, label = label),
       size = bar_label_size,
       nudge_y = 0.3,
       segment.size = 0.1,
@@ -111,30 +95,30 @@ sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
       direction = "both"
     ) +
     ggfittext::geom_fit_text(
-      aes(label = paste0(ifelse(S > 0, "+", ""), format_shap(S))),
+      ggplot2::aes(label = paste0(ifelse(S > 0, "+", ""), format_shap(S))),
       show.legend = FALSE,
       contrast = contrast,
       ...
     ) +
-    coord_cartesian(ylim = c(0.8, 1.2), clip = "off") +
-    scale_x_continuous(expand = expansion(mult = 0.13)) +
+    ggplot2::coord_cartesian(ylim = c(0.8, 1.2), clip = "off") +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.13)) +
     # scale_y_discrete(expand = expansion(add = c(0.1 + 0.5 * show_annotation, 0.6))) +
-    scale_fill_manual(values = fill_colors, drop = FALSE) +
-    theme_bw() +
-    theme(
+    ggplot2::scale_fill_manual(values = fill_colors, drop = FALSE) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
       aspect.ratio = 1 / 4,
-      panel.border = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.grid.major.y = element_blank(),
-      axis.line.x = element_line(),
-      axis.ticks.y = element_blank(),
-      axis.text.y = element_blank()
+      panel.border = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_blank(),
+      axis.line.x = ggplot2::element_line(),
+      axis.ticks.y = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank()
     ) +
-    labs(y = element_blank(), x = "SHAP value")
+    ggplot2::labs(y = ggplot2::element_blank(), x = "SHAP value")
 
   if (show_annotation) {
     p <- p +
-      annotate(
+      ggplot2::annotate(
         "segment",
         x = b_pred,
         xend = b_pred,
@@ -143,7 +127,7 @@ sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
         linewidth = 0.3,
         linetype = 2
       ) +
-      annotate(
+      ggplot2::annotate(
         "text",
         x = b_pred,
         y = c(0.4, 0.65),
@@ -154,7 +138,8 @@ sv_force.shapviz <- function(object, row_id = 1L, max_display = 6L,
   p
 }
 
-#' @describeIn sv_force SHAP force plot for object of class "mshapviz".
+#' @describeIn sv_force
+#'   SHAP force plot for object of class "mshapviz".
 #' @export
 sv_force.mshapviz <- function(object, row_id = 1L, max_display = 6L,
                               fill_colors = c("#f7d13d", "#a52c60"),
@@ -181,6 +166,3 @@ sv_force.mshapviz <- function(object, row_id = 1L, max_display = 6L,
   patchwork::wrap_plots(plot_list) +
     patchwork::plot_layout(ncol = 1L)
 }
-
-
-
