@@ -18,16 +18,14 @@
 #'   Set to `Inf` to show all features. Has no effect if `kind = "no"`.
 #' @param fill Color used to fill the bars (only used if bars are shown).
 #' @param bar_width Relative width of the bars (only used if bars are shown).
-#' @param bee_width Relative width of the beeswarms (only used if beeswarm shown).
+#' @param bee_width Relative width of the beeswarms.
 #' @param bee_adjust Relative bandwidth adjustment factor used in
-#'   estimating the density of the beeswarms (only used if beeswarm shown).
-#' @param viridis_args List of viridis color scale arguments used to control the
-#'   coloring of the beeswarm plot, see `?ggplot2::scale_color_viridis_c`.
-#'   The default points to the global option `shapviz.viridis_args`, which
-#'   corresponds to `list(begin = 0.25, end = 0.85, option = "inferno")`.
-#'   These values are passed to [ggplot2::scale_color_viridis_c()].
-#'   For example, to switch to a standard viridis scale, you can either change the
-#'   default with `options(shapviz.viridis_args = list())` or set
+#'   estimating the density of the beeswarms.
+#' @param viridis_args List of viridis color scale arguments. The default points to the
+#'   global option `shapviz.viridis_args`, which corresponds to
+#'   `list(begin = 0.25, end = 0.85, option = "inferno")`. These values are passed to
+#'   [ggplot2::scale_color_viridis_c()]. For example, to switch to standard viridis,
+#'   either change the default with `options(shapviz.viridis_args = list())` or set
 #'   `viridis_args = list()`.
 #' @param color_bar_title Title of color bar of the beeswarm plot. Set to `NULL`
 #'   to hide the color bar altogether.
@@ -44,19 +42,16 @@
 #'   `kind = "no"` - a named numeric vector of sorted SHAP feature importances
 #'   (or a list of such vectors in case of an object of class "mshapviz").
 #' @examples
-#' X_train <- data.matrix(iris[, -1L])
-#' dtrain <- xgboost::xgb.DMatrix(X_train, label = iris[, 1L])
-#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
+#' \dontrun{
+#' X_train <- data.matrix(iris[, -1])
+#' dtrain <- xgboost::xgb.DMatrix(X_train, label = iris[, 1])
+#' fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 #' x <- shapviz(fit, X_pred = X_train)
 #' sv_importance(x)
-#' sv_importance(x, kind = "beeswarm", show_numbers = TRUE)
 #' sv_importance(x, kind = "no")
+#' sv_importance(x, kind = "beeswarm", show_numbers = TRUE)
+#' }
 #'
-#' X <- data.frame(matrix(rnorm(1000), ncol = 20L))
-#' S <- as.matrix(X)
-#' x2 <- shapviz(S, X)
-#' sv_importance(x2)
-#' sv_importance(x2, max_display = 5L)
 #' @seealso \code{\link{sv_interaction}}
 #' @export
 sv_importance <- function(object, ...) {

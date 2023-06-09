@@ -23,20 +23,20 @@ diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
 # Fit XGBoost model
 x <- c("carat", "clarity", "cut", "color")
 dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price)
-fit <- xgb.train(params = list(learning_rate = 0.1), data = dtrain, nrounds = 65L)
+fit <- xgb.train(params = list(learning_rate = 0.1), data = dtrain, nrounds = 65)
 
 ## -----------------------------------------------------------------------------
 # Explanation data
-dia_small <- diamonds[sample(nrow(diamonds), 2000L), ]
+dia_small <- diamonds[sample(nrow(diamonds), 2000), ]
 
 shp <- shapviz(fit, X_pred = data.matrix(dia_small[x]), X = dia_small)
 
 ## -----------------------------------------------------------------------------
-sv_waterfall(shp, row_id = 1L) +
+sv_waterfall(shp, row_id = 1) +
   theme(axis.text = element_text(size = 11))
 
 ## ---- fig.asp = .5------------------------------------------------------------
-sv_force(shp, row_id = 1L)
+sv_force(shp, row_id = 1)
 
 ## -----------------------------------------------------------------------------
 sv_waterfall(shp, shp$X$color == "D") +
@@ -64,6 +64,9 @@ library(patchwork)  # to use the & operator
 sv_dependence(shp, v = x) &
   theme_gray(base_size = 9) &
   ylim(-5000, 15000)
+
+## -----------------------------------------------------------------------------
+sv_dependence2D(shp, x = "carat", y = c("clarity", "color"), alpha = 0.5)
 
 ## -----------------------------------------------------------------------------
 shp_i <- shapviz(

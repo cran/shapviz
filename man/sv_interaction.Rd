@@ -41,27 +41,25 @@ sv_interaction(object, ...)
 \item{...}{Arguments passed to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}. For instance,
 passing \code{size = 1} will produce smaller dots.}
 
-\item{kind}{Set to "no" to simply return the matrix of average absolute SHAP
+\item{kind}{Set to "no" to return the matrix of average absolute SHAP
 interactions (or a list of such matrices in case of object of class "mshapviz").
-The default is "beeswarm".}
+Due to symmetry, off-diagonals are multiplied by two. The default is "beeswarm".}
 
 \item{max_display}{Maximum number of features (with highest importance) to plot.
 Set to \code{Inf} to show all features. Has no effect if \code{kind = "no"}.}
 
 \item{alpha}{Transparency of the beeswarm dots. Defaults to 0.3.}
 
-\item{bee_width}{Relative width of the beeswarms (only used if beeswarm shown).}
+\item{bee_width}{Relative width of the beeswarms.}
 
 \item{bee_adjust}{Relative bandwidth adjustment factor used in
-estimating the density of the beeswarms (only used if beeswarm shown).}
+estimating the density of the beeswarms.}
 
-\item{viridis_args}{List of viridis color scale arguments used to control the
-coloring of the beeswarm plot, see \code{?ggplot2::scale_color_viridis_c}.
-The default points to the global option \code{shapviz.viridis_args}, which
-corresponds to \code{list(begin = 0.25, end = 0.85, option = "inferno")}.
-These values are passed to \code{\link[ggplot2:scale_viridis]{ggplot2::scale_color_viridis_c()}}.
-For example, to switch to a standard viridis scale, you can either change the
-default with \code{options(shapviz.viridis_args = list())} or set
+\item{viridis_args}{List of viridis color scale arguments. The default points to the
+global option \code{shapviz.viridis_args}, which corresponds to
+\code{list(begin = 0.25, end = 0.85, option = "inferno")}. These values are passed to
+\code{\link[ggplot2:scale_viridis]{ggplot2::scale_color_viridis_c()}}. For example, to switch to standard viridis,
+either change the default with \code{options(shapviz.viridis_args = list())} or set
 \code{viridis_args = list()}.}
 
 \item{color_bar_title}{Title of color bar of the beeswarm plot. Set to \code{NULL}
@@ -89,12 +87,13 @@ The features are sorted in decreasing order of usual SHAP importance.
 
 }}
 \examples{
-dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1L]), label = iris[, 1L])
-fit <- xgboost::xgb.train(data = dtrain, nrounds = 50L, nthread = 1L)
+\dontrun{
+dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
+fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 x <- shapviz(fit, X_pred = dtrain, X = iris, interactions = TRUE)
-sv_interaction(x)
-sv_interaction(x, max_display = 2L, size = 3, alpha = 0.1)
 sv_interaction(x, kind = "no")
+sv_interaction(x, max_display = 2, size = 3)
+}
 }
 \seealso{
 \code{\link[=sv_importance]{sv_importance()}}

@@ -15,8 +15,8 @@
 
 SHAP (SHapley Additive exPlanations, [1]) is an ingenious way to study black box models. SHAP values decompose - as fair as possible - predictions into additive feature contributions. Crunching SHAP values requires clever algorithms by clever people. Analyzing them, however, is super easy with the right visualizations. {shapviz} offers the latter: 
 
-- `sv_dependence()`: Dependence plots to study feature effects and interactions.
-- `sv_importance()`: Importance plots (bar plots and/or beeswarm "summary" plots) to study variable importance.
+- `sv_importance()`: Importance plots (bar plots and/or beeswarm plots) to study variable importance.
+- `sv_dependence()` and `sv_dependence2D()`: Dependence plots to study feature effects and interactions.
 - `sv_interaction()`: Interaction plots.
 - `sv_waterfall()`: Waterfall plots.
 - `sv_force()`: Force plots as an alternative to waterfall plots.
@@ -56,7 +56,7 @@ install.packages("shapviz")
 
 # Or the newest version from GitHub:
 # install.packages("devtools")
-devtools::install_github("mayer79/shapviz")
+devtools::install_github("ModelOriented/shapviz")
 ```
 
 ## Usage
@@ -74,7 +74,7 @@ set.seed(3653)
 
 x <- c("carat", "cut", "color", "clarity")
 dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price)
-fit <- xgb.train(params = list(learning_rate = 0.1), data = dtrain, nrounds = 65L)
+fit <- xgb.train(params = list(learning_rate = 0.1), data = dtrain, nrounds = 65)
 ```
 
 ### Create "shapviz" object
@@ -85,7 +85,7 @@ In this example, we construct the "shapviz" object directly from the fitted XGBo
 
 ``` r
 # Explanation data
-dia_small <- diamonds[sample(nrow(diamonds), 2000L), ]
+dia_small <- diamonds[sample(nrow(diamonds), 2000), ]
 
 shp <- shapviz(fit, X_pred = data.matrix(dia_small[x]), X = dia_small)
 ```
@@ -163,6 +163,16 @@ sv_dependence(shp, v = x) &
 ```
 
 ![](man/figures/README-dep-multi.png)
+
+To show the combined effects of two features (sum of their SHAP values), 2D dependence plots are available:
+
+``` r
+sv_dependence2D(shp, x = "carat", y = c("clarity", "color"), alpha = 0.5)
+```
+
+![](man/figures/README-dep2D.png)
+
+This is especially interesting for geographic components in a model, see corresponding vignette.
 
 ### Interactions
 
