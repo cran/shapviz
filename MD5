@@ -1,13 +1,13 @@
-60f2241d76aa83f47f84b7f3b2f1e3ea *DESCRIPTION
-306d0364ce9ab50d2ef6f6eed5e84c97 *NAMESPACE
-6dd235eae9a72c0eac23d07956add3a3 *NEWS.md
+5b1d043f655148809bd78d8615547917 *DESCRIPTION
+75ded7e6bb2af5511408ce0fc37b3565 *NAMESPACE
+690c01310e6cd2f9ebfc8f48be6cd13c *NEWS.md
 fc3f180c0a1bbaa75478788aa0ba57a9 *R/bee.R
 c93623f94817880dc87e3343f67bd591 *R/collapse_shap.R
 c839d09d86bfc0061428a053b1d218af *R/data.R
 02d40032cbba675849e1008032ef55bd *R/extractors.R
-c724b6e7a0cb2ecd6db02c09db2cddaa *R/methods.R
+20e7545582b5f1e8cada6c72f3af3bf6 *R/methods.R
 b8782982001a102a3fffb22911411c8e *R/shapviz-package.R
-c4621d6128b7bff5dd97065df6aa9eef *R/shapviz.R
+cf31adab89000976e98fdef2c82e26ac *R/shapviz.R
 72a65befdef7c689c2f4b89bf3282b53 *R/sv_dependence.R
 8cfc8779c6cf7816ac5e3a1178c88fd7 *R/sv_dependence2D.R
 4287f0af0af79c247c2dc819c2f0e729 *R/sv_force.R
@@ -29,7 +29,8 @@ b38affdaa0763635836719f17278d4bd *inst/doc/multiple_output.html
 a0732de5e68ec2108572e9094545b693 *man/c.shapviz.Rd
 65b8d25323308cfb8af3cae35ff993ae *man/collapse_shap.Rd
 8c5ecb7f3ab3dfe59d70bf6a870de2dc *man/dim.shapviz.Rd
-510a3ad38468b50cb1a451f283a0eb61 *man/dimnames.shapviz.Rd
+342b44960e06e2949680c637153d7dff *man/dimnames-set-.shapviz.Rd
+cef930f3b146e93504d9250719d4b627 *man/dimnames.shapviz.Rd
 bb45c614f0377a135276e8e66d942c9f *man/extractors.Rd
 53992ce36b27984af8d84cfd8eac55b7 *man/figures/README-dep-multi.png
 5ea07514c4bd60564a592f65fd5ebda9 *man/figures/README-dep.svg
@@ -69,7 +70,7 @@ f2daed91cedba8f06ecd6837b4424c98 *man/sv_dependence.Rd
 93ac47f64e8b6f43206969214f907467 *tests/testthat.R
 5cf053b1b212c94af1e40b084cabcce0 *tests/testthat/test-bee.R
 ddd4c9fd62b06e5d263a26c074a67f29 *tests/testthat/test-collapse_shap.R
-421eac8ca94fe4f3151e896160a6f08f *tests/testthat/test-interface.R
+e40e5979a016da785f42004e71f3fe5f *tests/testthat/test-interface.R
 6a2052d14176c436f163422b11668143 *tests/testthat/test-plots-mshapviz.R
 cf75721f2ca9bbd7d4bf6f289c01d775 *tests/testthat/test-plots-shapviz.R
 a18683f669e7acc1acc76406da0371ff *vignettes/basic_use.Rmd
