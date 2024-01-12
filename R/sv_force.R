@@ -11,8 +11,9 @@
 #'   (via [ggrepel::geom_text_repel()]).
 #' @returns An object of class "ggplot" (or "patchwork") representing a force plot.
 #' @examples
-#' \dontrun{
-#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
+#' dtrain <- xgboost::xgb.DMatrix(
+#'   data.matrix(iris[, -1]), label = iris[, 1], nthread = 1
+#' )
 #' fit <- xgboost::xgb.train(data = dtrain, nrounds = 20, nthread = 1)
 #' x <- shapviz(fit, X_pred = dtrain, X = iris[, -1])
 #' sv_force(x)
@@ -20,7 +21,6 @@
 #'
 #' # Aggregate over all observations with Petal.Length == 1.4
 #' sv_force(x, row_id = x$X$Petal.Length == 1.4)
-#' }
 #' @export
 #' @seealso [sv_waterfall()]
 sv_force <- function(object, ...) {

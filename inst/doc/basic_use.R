@@ -4,8 +4,8 @@ knitr::opts_chunk$set(
   comment = "#>",
   warning = FALSE,
   message = FALSE,
-  fig.width = 6, 
-  fig.height = 4,
+  fig.width = 5.5, 
+  fig.height = 3.5,
   fig.align = "center"
 )
 
@@ -13,31 +13,32 @@ knitr::opts_chunk$set(
 library(shapviz)
 library(ggplot2)
 library(xgboost)
+library(patchwork)  # We will need its "&" operator
 
-set.seed(3653)
+set.seed(1)
 
-# Turn ordinal factors into normal ones (required for some of the examples)
-ord <- c("clarity", "cut", "color")
-diamonds[, ord] <- lapply(diamonds[, ord], factor, ordered = FALSE)
-
-# Fit XGBoost model
-x <- c("carat", "clarity", "cut", "color")
-dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price)
+# Build model
+x <- c("carat", "cut", "color", "clarity")
+dtrain <- xgb.DMatrix(data.matrix(diamonds[x]), label = diamonds$price, nthread = 1)
 fit <- xgb.train(
   params = list(learning_rate = 0.1, nthread = 1), data = dtrain, nrounds = 65
 )
 
-## -----------------------------------------------------------------------------
-# Explanation data
-dia_small <- diamonds[sample(nrow(diamonds), 2000), ]
+# SHAP analysis: X can even contain factors
+dia_2000 <- diamonds[sample(nrow(diamonds), 2000), x]
+shp <- shapviz(fit, X_pred = data.matrix(dia_2000), X = dia_2000)
 
-shp <- shapviz(fit, X_pred = data.matrix(dia_small[x]), X = dia_small)
+sv_importance(shp, show_numbers = TRUE)
+sv_importance(shp, kind = "beeswarm")  # kind = "both" combines bar and bee
+
+## ---- fig.width=8.5, fig.height=5.5-------------------------------------------
+sv_dependence(shp, v = x)
 
 ## -----------------------------------------------------------------------------
 sv_waterfall(shp, row_id = 1) +
   theme(axis.text = element_text(size = 11))
 
-## ---- fig.asp = .5------------------------------------------------------------
+## ---- fig.height=2------------------------------------------------------------
 sv_force(shp, row_id = 1)
 
 ## -----------------------------------------------------------------------------
@@ -45,43 +46,10 @@ sv_waterfall(shp, shp$X$color == "D") +
   theme(axis.text = element_text(size = 11))
 
 ## -----------------------------------------------------------------------------
-# A barplot of mean absolute SHAP values
-sv_importance(shp)
-
-# A beeswarm plot
-sv_importance(shp, kind = "beeswarm")
-
-# Or both!
-sv_importance(shp, kind = "both", show_numbers = TRUE, bee_width = 0.2)
-
-## -----------------------------------------------------------------------------
-sv_dependence(shp, v = "color")
-
-sv_dependence(shp, v = "carat", alpha = 0.2, size = 1) +
-  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2)))
-
-## ---- fig.height=5.5, fig.width=7---------------------------------------------
-library(patchwork)  # to use the & operator
-
-sv_dependence(shp, v = x) &
-  theme_gray(base_size = 9) &
-  ylim(-5000, 15000)
-
-## -----------------------------------------------------------------------------
-sv_dependence2D(shp, x = "carat", y = c("clarity", "color"), alpha = 0.5)
-
-## -----------------------------------------------------------------------------
 shp_i <- shapviz(
-  fit, X_pred = data.matrix(dia_small[x]), X = dia_small, interactions = TRUE
+  fit, X_pred = data.matrix(dia_2000[x]), X = dia_2000, interactions = TRUE
 )
-
-sv_dependence(shp_i, v = "color", color_var = "cut", interactions = TRUE)
-
-## -----------------------------------------------------------------------------
-sv_dependence(shp_i, v = "carat", color_var = x, interactions = TRUE) &
-  ylim(-6000, 13000)
-
-## -----------------------------------------------------------------------------
+sv_dependence(shp_i, v = "carat", color_var = x, interactions = TRUE)
 sv_interaction(shp_i) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 

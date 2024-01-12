@@ -7,7 +7,8 @@
 #' maybe other regional features that can be passed via `add_vars`).
 #'
 #' If SHAP interaction values are available, setting `interactions = TRUE` allows
-#' to focus on pure interaction effects (multiplied by two).
+#' to focus on pure interaction effects (multiplied by two). In this case, `add_vars`
+#' has no effect.
 #'
 #' @importFrom rlang .data
 #'
@@ -28,8 +29,9 @@
 #' @param ... Arguments passed to [ggplot2::geom_jitter()].
 #' @returns An object of class "ggplot" (or "patchwork") representing a dependence plot.
 #' @examples
-#' \dontrun{
-#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
+#' dtrain <- xgboost::xgb.DMatrix(
+#'   data.matrix(iris[, -1]), label = iris[, 1], nthread = 1
+#' )
 #' fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 #' sv <- shapviz(fit, X_pred = dtrain, X = iris)
 #' sv_dependence2D(sv, x = "Petal.Length", y = "Species")
@@ -45,7 +47,6 @@
 #' # mshapviz object
 #' mx <- split(sv, f = iris$Species)
 #' sv_dependence2D(mx, x = "Petal.Length", y = "Sepal.Width")
-#' }
 #' @export
 #' @seealso [sv_dependence()]
 sv_dependence2D <- function(object, ...) {
@@ -114,7 +115,7 @@ sv_dependence2D.shapviz <- function(object, x, y,
 
   # Color variable
   if (!interactions) {
-    s <- rowSums(S[, c(x, y, add_vars)])
+    s <- rowSums(S[, unique(c(x, y, add_vars))])  # unique() if add_vars contains x or y
   } else {
     s <- S_inter[, x, y]
     if (x != y) {

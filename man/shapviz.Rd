@@ -123,7 +123,7 @@ Furthermore, \code{\link[=shapviz]{shapviz()}} can digest the results of
 \item \code{treeshap::treeshap()},
 \item \code{DALEX::predict_parts()},
 \item \code{kernelshap::kernelshap()}, and
-\item \code{permshap::permshap()},
+\item \code{kernelshap::permshap()},
 }
 
 check the vignettes for examples.
@@ -161,7 +161,7 @@ return a "mshapviz" object, containing a "shapviz" object per output.
 
 \item \code{shapviz(kernelshap)}: Creates a "shapviz" object from \code{kernelshap::kernelshap()}.
 
-\item \code{shapviz(permshap)}: Creates a "shapviz" object from \code{permshap::permshap()}.
+\item \code{shapviz(permshap)}: Creates a "shapviz" object from \code{kernelshap::permshap()}.
 
 \item \code{shapviz(H2ORegressionModel)}: Creates a "shapviz" object from a (tree-based) H2O regression model.
 
@@ -174,10 +174,9 @@ return a "mshapviz" object, containing a "shapviz" object per output.
 S <- matrix(c(1, -1, -1, 1), ncol = 2, dimnames = list(NULL, c("x", "y")))
 X <- data.frame(x = c("a", "b"), y = c(100, 10))
 shapviz(S, X, baseline = 4)
-\dontrun{
 # XGBoost models
 X_pred <- data.matrix(iris[, -1])
-dtrain <- xgboost::xgb.DMatrix(X_pred, label = iris[, 1])
+dtrain <- xgboost::xgb.DMatrix(X_pred, label = iris[, 1], nthread = 1)
 fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 
 # Will use numeric matrix "X_pred" as feature matrix
@@ -195,8 +194,10 @@ x <- shapviz(fit, X_pred = dtrain, X = iris)
 # Multiclass setting
 params <- list(objective = "multi:softprob", num_class = 3)
 X_pred <- data.matrix(iris[, -5])
-dtrain <- xgboost::xgb.DMatrix(X_pred, label = as.integer(iris[, 5]) - 1)
-fit <- xgboost::xgb.train(params = params, data = dtrain, nrounds = 10)
+dtrain <- xgboost::xgb.DMatrix(
+  X_pred, label = as.integer(iris[, 5]) - 1, nthread = 1
+)
+fit <- xgboost::xgb.train(params = params, data = dtrain, nrounds = 10, nthread = 1)
 
 # Select specific class
 x <- shapviz(fit, X_pred = X_pred, which_class = 3)
@@ -208,7 +209,7 @@ x
 
 # What if we would have one-hot-encoded values and want to explain the original column?
 X_pred <- stats::model.matrix(~ . -1, iris[, -1])
-dtrain <- xgboost::xgb.DMatrix(X_pred, label = as.integer(iris[, 1]))
+dtrain <- xgboost::xgb.DMatrix(X_pred, label = as.integer(iris[, 1]), nthread = 1)
 fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 x <- shapviz(
   fit,
@@ -244,7 +245,6 @@ if (requireNamespace("lightgbm", quietly = TRUE)) {
   mx <- shapviz(fit, X_pred = X_pred)
   mx
   all.equal(mx[[3]], x)
-}
 }
 }
 \seealso{

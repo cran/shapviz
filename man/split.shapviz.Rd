@@ -9,7 +9,8 @@
 \arguments{
 \item{x}{Object of class "shapviz".}
 
-\item{f}{Vector used to split feature values and SHAP (interaction) values.}
+\item{f}{Vector used to split feature values and SHAP (interaction) values.
+Empty factor levels are dropped.}
 
 \item{...}{Arguments passed to \code{split()}.}
 }

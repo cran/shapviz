@@ -17,7 +17,7 @@ library(xgboost)
 
 params <- list(objective = "multi:softprob", num_class = 3, nthread = 1)
 X_pred <- data.matrix(iris[, -5])
-dtrain <- xgb.DMatrix(X_pred, label = as.integer(iris[, 5]) - 1)
+dtrain <- xgb.DMatrix(X_pred, label = as.integer(iris[, 5]) - 1, nthread = 1)
 fit <- xgb.train(params = params, data = dtrain, nrounds = 50)
 
 # Create "mshapviz" object (logit scale)
@@ -45,10 +45,10 @@ library(patchwork)
 library(xgboost)
 
 X_pred <- data.matrix(iris[, -1])
-dtrain <- xgb.DMatrix(X_pred, label = iris[, 1])
+dtrain <- xgb.DMatrix(X_pred, label = iris[, 1], nthread = 1)
 fit_xgb <- xgb.train(params = list(nthread = 1), data = dtrain, nrounds = 50)
 
-# Create "mshapviz" object
+# Create "mshapviz" object and split it into subgroups
 shap_xgb <- shapviz(fit_xgb, X_pred = X_pred, X = iris)
 x_subgroups <- split(shap_xgb, f = iris$Species)
 

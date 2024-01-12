@@ -35,8 +35,9 @@
 #'   will altogether suppress adding text to the bars.
 #' @returns An object of class "ggplot" (or "patchwork") representing a waterfall plot.
 #' @examples
-#' \dontrun{
-#' dtrain <- xgboost::xgb.DMatrix(data.matrix(iris[, -1]), label = iris[, 1])
+#' dtrain <- xgboost::xgb.DMatrix(
+#'   data.matrix(iris[, -1]), label = iris[, 1], nthread = 1
+#' )
 #' fit <- xgboost::xgb.train(data = dtrain, nrounds = 20, nthread = 1)
 #' x <- shapviz(fit, X_pred = dtrain, X = iris[, -1])
 #' sv_waterfall(x)
@@ -49,7 +50,6 @@
 #'
 #' # Aggregate over all observations with Petal.Length == 1.4
 #' sv_waterfall(x, row_id = x$X$Petal.Length == 1.4)
-#' }
 #' @export
 #' @seealso [sv_force()]
 sv_waterfall <- function(object, ...) {
