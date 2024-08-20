@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -36,14 +36,7 @@ params <- list(
   learning_rate = 0.2, objective = "reg:squarederror", max_depth = 5, nthread = 1
 )
 
-fit <- xgb.train(
-  params = params, 
-  data = dtrain, 
-  watchlist = list(valid = dvalid), 
-  early_stopping_rounds = 20,
-  nrounds = 1000,
-  callbacks = list(cb.print.evaluation(period = 100))
-)
+fit <- xgb.train(params = params, data = dtrain, nrounds = 200)
 
 ## -----------------------------------------------------------------------------
 sv <- shapviz(fit, X_pred = X_valid)
@@ -77,14 +70,7 @@ ic <- c(
 # Modify parameters
 params$interaction_constraints <- ic
 
-fit2 <- xgb.train(
-  params = params, 
-  data = dtrain2, 
-  watchlist = list(valid = dvalid2), 
-  early_stopping_rounds = 20,
-  nrounds = 1000,
-  callbacks = list(cb.print.evaluation(period = 100))
-)
+fit2 <- xgb.train(params = params, data = dtrain2, nrounds = 200)
 
 # SHAP analysis
 sv2 <- shapviz(fit2, X_pred = X_valid2)

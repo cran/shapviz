@@ -12,8 +12,9 @@
 #' - `shapr::explain()`,
 #' - `treeshap::treeshap()`,
 #' - `DALEX::predict_parts()`,
-#' - `kernelshap::kernelshap()`, and
-#' - `kernelshap::permshap()`,
+#' - `kernelshap::kernelshap()`,
+#' - `kernelshap::permshap()`, and
+#' - `kernelshap::additive_shap()`,
 #'
 #' check the vignettes for examples.
 #'
@@ -85,8 +86,9 @@ shapviz.default = function(object, ...) {
 #' @describeIn shapviz
 #'   Creates a "shapviz" object from a matrix of SHAP values.
 #' @export
-shapviz.matrix = function(object, X, baseline = 0, collapse = NULL,
-                          S_inter = NULL, ...) {
+shapviz.matrix = function(
+    object, X, baseline = 0, collapse = NULL, S_inter = NULL, ...
+  ) {
   if (!is.null(collapse)) {
     object <- collapse_shap(object, collapse = collapse)
     if (!is.null(S_inter)) {
@@ -183,8 +185,15 @@ shapviz.matrix = function(object, X, baseline = 0, collapse = NULL,
 #'   mx
 #'   all.equal(mx[[3]], x)
 #' }
-shapviz.xgb.Booster = function(object, X_pred, X = X_pred, which_class = NULL,
-                               collapse = NULL, interactions = FALSE, ...) {
+shapviz.xgb.Booster = function(
+    object,
+    X_pred,
+    X = X_pred,
+    which_class = NULL,
+    collapse = NULL,
+    interactions = FALSE,
+    ...
+  ) {
   stopifnot(
     "X must be a matrix or data.frame. It can't be an object of class xgb.DMatrix" =
       is.matrix(X) || is.data.frame(X),
@@ -196,23 +205,51 @@ shapviz.xgb.Booster = function(object, X_pred, X = X_pred, which_class = NULL,
   S <- stats::predict(object, newdata = X_pred, predcontrib = TRUE, ...)
 
   if (interactions) {
-    S_inter <- stats::predict(object, newdata = X_pred, predinteraction = TRUE, ...)
+    S_inter <- stats::predict(
+      object, newdata = X_pred, predinteraction = TRUE, ...
+    )
   }
 
-  # Multiclass
+  if (utils::packageVersion("xgboost") >= "2") {
+    # Turn result of multi-output model into list of lower dim arrays
+    if (length(dim(S)) == 3L) {
+      S <- asplit(S, MARGIN = 2L)
+      if (interactions) {
+        S_inter <- asplit(S_inter, MARGIN = 2L)
+      }
+    }
+  } else {
+    # Handle problem that S and S_inter lack a dimension if X_pred has only one row
+    # This only applies to XGBoost < 2
+    if (nrow(X_pred) == 1L) {
+      if (is.list(S)) {  #  multiclass
+        S <- lapply(S, rbind)
+        if (interactions) {
+          S_inter <- lapply(S_inter, .add_dim)
+        }
+      } else {
+        S <- rbind(S)
+        if (interactions) {
+          S_inter <-.add_dim(S_inter)
+        }
+      }
+    }
+  }
+
+  # Multi-class (or some other multi-output situation)
   if (is.list(S)) {
     if (is.null(which_class)) {
-      nms <- setdiff(colnames(S[[1L]]), "BIAS")
+      pp <- ncol(S[[1L]])  # = ncol(X_pred) + 1. The last column is the baseline
       if (interactions) {
-        S_inter <- lapply(S_inter, function(s) s[, nms, nms, drop = FALSE])
+        S_inter <- lapply(S_inter, function(s) s[, -pp, -pp, drop = FALSE])
       } else {
         # mapply() does not want to see a length 0 object like NULL
         S_inter <- replicate(length(S), NULL)
       }
       shapviz_list <- mapply(
         FUN = shapviz.matrix,
-        object = lapply(S, function(s) s[, nms, drop = FALSE]),
-        baseline = lapply(S, function(s) unname(s[1L, "BIAS"])),
+        object = lapply(S, function(s) s[, -pp, drop = FALSE]),
+        baseline = lapply(S, function(s) unname(s[1L, pp])),
         S_inter = S_inter,
         MoreArgs = list(X = X, collapse = collapse),
         SIMPLIFY = FALSE
@@ -228,12 +265,12 @@ shapviz.xgb.Booster = function(object, X_pred, X = X_pred, which_class = NULL,
   }
 
   # Call matrix method
-  nms <- setdiff(colnames(S), "BIAS")
+  pp <- ncol(S)
   shapviz.matrix(
-    object = S[, nms, drop = FALSE],
+    object = S[, -pp, drop = FALSE],
     X = X,
-    baseline = unname(S[1L, "BIAS"]),
-    S_inter = if (interactions) S_inter[, nms, nms, drop = FALSE],
+    baseline = unname(S[1L, pp]),
+    S_inter = if (interactions) S_inter[, -pp, -pp, drop = FALSE],
     collapse = collapse
   )
 }
@@ -241,8 +278,9 @@ shapviz.xgb.Booster = function(object, X_pred, X = X_pred, which_class = NULL,
 #' @describeIn shapviz
 #'   Creates a "shapviz" object from a LightGBM model.
 #' @export
-shapviz.lgb.Booster = function(object, X_pred, X = X_pred,
-                               which_class = NULL, collapse = NULL, ...) {
+shapviz.lgb.Booster = function(
+    object, X_pred, X = X_pred, which_class = NULL, collapse = NULL, ...
+  ) {
   if (!requireNamespace("lightgbm", quietly = TRUE)) {
     stop("Package 'lightgbm' not installed")
   }
@@ -324,8 +362,9 @@ shapviz.explain <- function(object, X = NULL, baseline = NULL, collapse = NULL, 
 #' @describeIn shapviz
 #'   Creates a "shapviz" object from `treeshap::treeshap()`.
 #' @export
-shapviz.treeshap <- function(object, X = object[["observations"]],
-                             baseline = 0, collapse = NULL, ...) {
+shapviz.treeshap <- function(
+    object, X = object[["observations"]], baseline = 0, collapse = NULL, ...
+  ) {
   S_inter <- object[["interactions"]]
   if (!is.null(S_inter)) {
     S_inter <- aperm(S_inter, c(3L, 1:2))
@@ -382,10 +421,12 @@ shapviz.shapr <- function(object, X = object[["x_test"]], collapse = NULL, ...) 
 }
 
 #' @describeIn shapviz
-#'   Creates a "shapviz" object from `kernelshap::kernelshap()`.
+#'   Creates a "shapviz" object from an object of class 'kernelshap'. This includes
+#'   results of `kernelshap()`, `permshap()`, and `additive_shap()`.
 #' @export
-shapviz.kernelshap <- function(object, X = object[["X"]],
-                               which_class = NULL, collapse = NULL, ...) {
+shapviz.kernelshap <- function(
+    object, X = object[["X"]], which_class = NULL, collapse = NULL, ...
+  ) {
   S <- object[["S"]]
   b <- object[["baseline"]]
 
@@ -413,35 +454,29 @@ shapviz.kernelshap <- function(object, X = object[["X"]],
 }
 
 #' @describeIn shapviz
-#'   Creates a "shapviz" object from `kernelshap::permshap()`.
-#' @export
-shapviz.permshap <- function(object, X = object[["X"]],
-                             which_class = NULL, collapse = NULL, ...) {
-  # The output structure of permshap is identical to kernelshap
-  shapviz.kernelshap(object, X = X, which_class = which_class, collapse = collapse, ...)
-}
-
-#' @describeIn shapviz
 #'   Creates a "shapviz" object from a (tree-based) H2O regression model.
 #' @export
-shapviz.H2ORegressionModel = function(object, X_pred, X = as.data.frame(X_pred),
-                                      collapse = NULL, ...) {
+shapviz.H2ORegressionModel = function(
+    object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...
+  ) {
   shapviz.H2OModel(object = object, X_pred = X_pred, X = X, collapse = collapse, ...)
 }
 
 #' @describeIn shapviz
 #'   Creates a "shapviz" object from a (tree-based) H2O binary classification model.
 #' @export
-shapviz.H2OBinomialModel = function(object, X_pred, X = as.data.frame(X_pred),
-                                    collapse = NULL, ...) {
+shapviz.H2OBinomialModel = function(
+    object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...
+  ) {
   shapviz.H2OModel(object = object, X_pred = X_pred, X = X, collapse = collapse, ...)
 }
 
 #' @describeIn shapviz
 #'   Creates a "shapviz" object from a (tree-based) H2O model (base class).
 #' @export
-shapviz.H2OModel = function(object, X_pred, X = as.data.frame(X_pred),
-                            collapse = NULL, ...) {
+shapviz.H2OModel = function(
+    object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...
+  ) {
   if (!requireNamespace("h2o", quietly = TRUE)) {
     stop("Package 'h2o' not installed")
   }
@@ -538,3 +573,13 @@ mshapviz <- function(object, ...) {
     )
   }
 }
+
+# Turns matrix into 3D-array with one "row". solving a problem with XGBoost and one row.
+.add_dim <- function(x) {
+  if (is.matrix(x)) {  # Problematic case: interactions is not 3D array
+    out <- array(dim = c(1L, dim(x)), dimnames = c(list(NULL), dimnames(x)))
+    out[1L, , ] <- x
+  }
+  return(out)
+}
+

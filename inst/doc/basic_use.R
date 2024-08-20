@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -31,14 +31,14 @@ shp <- shapviz(fit, X_pred = data.matrix(dia_2000), X = dia_2000)
 sv_importance(shp, show_numbers = TRUE)
 sv_importance(shp, kind = "beeswarm")  # kind = "both" combines bar and bee
 
-## ---- fig.width=8.5, fig.height=5.5-------------------------------------------
+## ----fig.width=8.5, fig.height=5.5--------------------------------------------
 sv_dependence(shp, v = x)
 
 ## -----------------------------------------------------------------------------
 sv_waterfall(shp, row_id = 1) +
   theme(axis.text = element_text(size = 11))
 
-## ---- fig.height=2------------------------------------------------------------
+## ----fig.height=2-------------------------------------------------------------
 sv_force(shp, row_id = 1)
 
 ## -----------------------------------------------------------------------------
