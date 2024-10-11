@@ -1,6 +1,6 @@
-1b1de4c4e645943571c619080fb11c79 *DESCRIPTION
+a04a196c0f0435b789e5bd1cb67a6b62 *DESCRIPTION
 697092fe3376b3616554cc186bd813d0 *NAMESPACE
-3e0fa4372cbaa6e2cf3f45c6a69e9142 *NEWS.md
+8b22ec8d68a2bfb0f13bcb8607dc4930 *NEWS.md
 fc3f180c0a1bbaa75478788aa0ba57a9 *R/bee.R
 c93623f94817880dc87e3343f67bd591 *R/collapse_shap.R
 c839d09d86bfc0061428a053b1d218af *R/data.R
@@ -26,7 +26,7 @@ cdc0d928a30218b38f392f92e038a507 *inst/doc/basic_use.Rmd
 84e3d839c6ca25245271ae112817ff09 *inst/doc/geographic.html
 0db3c42983d00ae2754aa597d5734f5e *inst/doc/multiple_output.R
 2cc241f678ebdcd558468845b42823c9 *inst/doc/multiple_output.Rmd
-b09825813d77dc5c59afa23888e753b1 *inst/doc/multiple_output.html
+62b27b14d909b9514b5de023fac23f9e *inst/doc/multiple_output.html
 155065fed04c1e9504a416397e6dc840 *inst/doc/tidymodels.Rmd
 4d9ee7ac2fbdee0956c68862651c06f8 *inst/doc/tidymodels.html
 a0732de5e68ec2108572e9094545b693 *man/c.shapviz.Rd
@@ -41,6 +41,7 @@ bb45c614f0377a135276e8e66d942c9f *man/extractors.Rd
 44548d3ae6e48bf03858149fe8cea0c3 *man/figures/README-imp.svg
 dd1fed04ab22fd2d3631f07257a6cda5 *man/figures/README-waterfall.svg
 ccb8290c496776186e640933a5f04249 *man/figures/VIGNETTE-dep-ranger.png
+d6d222cf803a9084eb62d40078c5e6d0 *man/figures/VIGNETTE-dep.png
 10917347e185b10c1281d16453f99154 *man/figures/VIGNETTE-tidy-class-lgb-dep.png
 dd110b6bb9e1927ee981c68c4ce79ff8 *man/figures/VIGNETTE-tidy-class-lgb-imp.png
 1ce8383cedc5911a91899bae3710e3eb *man/figures/VIGNETTE-tidy-class-normal-dep1.png
