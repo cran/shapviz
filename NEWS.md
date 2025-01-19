@@ -1,3 +1,15 @@
+# shapviz 0.9.7
+
+### Documentation
+
+- H2O now supports passing background data for model agnostic SHAP. This is now easier visible in {shapviz}, see https://github.com/h2oai/h2o-3/issues/16463.
+- H2O random forests (regression and binary classification) now support TreeSHAP as well [#163](https://github.com/ModelOriented/shapviz/pull/163).
+
+### Compatibility
+
+- Adapt for upcoming {xgboost} version.
+- Adapt for upcoming {shapr} version, thanks @martinju for the fix [#162](https://github.com/ModelOriented/shapviz/pull/162).
+
 # shapviz 0.9.6
 
 ### Documentation

@@ -11,8 +11,6 @@
 \alias{shapviz.predict_parts}
 \alias{shapviz.shapr}
 \alias{shapviz.kernelshap}
-\alias{shapviz.H2ORegressionModel}
-\alias{shapviz.H2OBinomialModel}
 \alias{shapviz.H2OModel}
 \title{Initialize "shapviz" Object}
 \usage{
@@ -46,15 +44,25 @@ shapviz(object, ...)
 
 \method{shapviz}{predict_parts}(object, ...)
 
-\method{shapviz}{shapr}(object, X = object[["x_test"]], collapse = NULL, ...)
+\method{shapviz}{shapr}(
+  object,
+  X = as.data.frame(object$internal$data$x_explain),
+  collapse = NULL,
+  ...
+)
 
 \method{shapviz}{kernelshap}(object, X = object[["X"]], which_class = NULL, collapse = NULL, ...)
 
-\method{shapviz}{H2ORegressionModel}(object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...)
-
-\method{shapviz}{H2OBinomialModel}(object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...)
-
-\method{shapviz}{H2OModel}(object, X_pred, X = as.data.frame(X_pred), collapse = NULL, ...)
+\method{shapviz}{H2OModel}(
+  object,
+  X_pred,
+  X = as.data.frame(X_pred),
+  collapse = NULL,
+  background_frame = NULL,
+  output_space = FALSE,
+  output_per_reference = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{For XGBoost, LightGBM, and H2O, this is the fitted model used to
@@ -93,6 +101,18 @@ kernelshap, and permshap.}
 
 \item{interactions}{Should SHAP interactions be calculated (default is \code{FALSE})?
 Only available for XGBoost.}
+
+\item{background_frame}{Background dataset for baseline SHAP or marginal SHAP.
+Only for H2O models.}
+
+\item{output_space}{If model has link function, this argument controls whether the
+SHAP values should be linearly (= approximately) transformed to the original scale
+(if \code{TRUE}). The default is to return the values on link scale.
+Only for H2O models.}
+
+\item{output_per_reference}{Switches between different algorithms, see
+\code{?h2o::h2o.predict_contributions} for details.
+Only for H2O models.}
 }
 \value{
 An object of class "shapviz" with the following elements:
@@ -110,7 +130,7 @@ from a fitted model of type
 \itemize{
 \item XGBoost,
 \item LightGBM, or
-\item H2O (tree-based regression or binary classification model).
+\item H2O.
 }
 
 Furthermore, \code{\link[=shapviz]{shapviz()}} can digest the results of
@@ -160,11 +180,7 @@ return a "mshapviz" object, containing a "shapviz" object per output.
 \item \code{shapviz(kernelshap)}: Creates a "shapviz" object from an object of class 'kernelshap'. This includes
 results of \code{kernelshap()}, \code{permshap()}, and \code{additive_shap()}.
 
-\item \code{shapviz(H2ORegressionModel)}: Creates a "shapviz" object from a (tree-based) H2O regression model.
-
-\item \code{shapviz(H2OBinomialModel)}: Creates a "shapviz" object from a (tree-based) H2O binary classification model.
-
-\item \code{shapviz(H2OModel)}: Creates a "shapviz" object from a (tree-based) H2O model (base class).
+\item \code{shapviz(H2OModel)}: Creates a "shapviz" object from an H2O model.
 
 }}
 \examples{
@@ -174,7 +190,7 @@ shapviz(S, X, baseline = 4)
 # XGBoost models
 X_pred <- data.matrix(iris[, -1])
 dtrain <- xgboost::xgb.DMatrix(X_pred, label = iris[, 1], nthread = 1)
-fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
+fit <- xgboost::xgb.train(list(nthread = 1), data = dtrain, nrounds = 10)
 
 # Will use numeric matrix "X_pred" as feature matrix
 x <- shapviz(fit, X_pred = X_pred)
@@ -189,12 +205,12 @@ sv_dependence(x, "Species")
 x <- shapviz(fit, X_pred = dtrain, X = iris)
 
 # Multiclass setting
-params <- list(objective = "multi:softprob", num_class = 3)
+params <- list(objective = "multi:softprob", num_class = 3, nthread = 1)
 X_pred <- data.matrix(iris[, -5])
 dtrain <- xgboost::xgb.DMatrix(
   X_pred, label = as.integer(iris[, 5]) - 1, nthread = 1
 )
-fit <- xgboost::xgb.train(params = params, data = dtrain, nrounds = 10, nthread = 1)
+fit <- xgboost::xgb.train(params = params, data = dtrain, nrounds = 10)
 
 # Select specific class
 x <- shapviz(fit, X_pred = X_pred, which_class = 3)
@@ -207,7 +223,7 @@ x
 # What if we would have one-hot-encoded values and want to explain the original column?
 X_pred <- stats::model.matrix(~ . -1, iris[, -1])
 dtrain <- xgboost::xgb.DMatrix(X_pred, label = as.integer(iris[, 1]), nthread = 1)
-fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
+fit <- xgboost::xgb.train(list(nthread = 1), data = dtrain, nrounds = 10)
 x <- shapviz(
   fit,
   X_pred = X_pred,
