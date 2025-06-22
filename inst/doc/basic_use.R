@@ -37,13 +37,13 @@ sv_importance(shp, show_numbers = TRUE)
 sv_importance(shp, kind = "beeswarm")
 
 ## ----fig.width=8.5, fig.height=5.5--------------------------------------------
-sv_dependence(shp, v = xvars)  # patchwork object
+sv_dependence(shp, v = xvars, share_y = TRUE)  # patchwork object
 
 ## -----------------------------------------------------------------------------
 sv_waterfall(shp, row_id = 1) +
   theme(axis.text = element_text(size = 11))
 
-## ----fig.height=2-------------------------------------------------------------
+## ----fig.height=3-------------------------------------------------------------
 sv_force(shp, row_id = 1)
 
 ## -----------------------------------------------------------------------------
@@ -55,6 +55,6 @@ shp_i <- shapviz(
   fit, X_pred = data.matrix(X_explain), X = X_explain, interactions = TRUE
 )
 sv_dependence(shp_i, v = "log_carat", color_var = xvars, interactions = TRUE)
-sv_interaction(shp_i) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+sv_interaction(shp_i)
+sv_interaction(shp_i, kind = "bar")
 

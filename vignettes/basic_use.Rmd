@@ -29,7 +29,7 @@ In particular, the following plots are available:
 
 - `sv_importance()`: Importance plot (bar/beeswarm).
 - `sv_dependence()` and `sv_dependence2D()`: Dependence plots to study feature effects and interactions.
-- `sv_interaction()`: Interaction plot (beeswarm).
+- `sv_interaction()`: Interaction plot (beeswarm/bar).
 - `sv_waterfall()`: Waterfall plot to study single or average predictions.
 - `sv_force()`: Force plot as alternative to waterfall plot.
 
@@ -86,7 +86,7 @@ sv_importance(shp, show_numbers = TRUE)
 sv_importance(shp, kind = "beeswarm")
 ```
 ```{r, fig.width=8.5, fig.height=5.5}
-sv_dependence(shp, v = xvars)  # patchwork object
+sv_dependence(shp, v = xvars, share_y = TRUE)  # patchwork object
 ```
 
 ### Decompose single predictions
@@ -97,7 +97,7 @@ We can visualize decompositions of single predictions via waterfall or force plo
 sv_waterfall(shp, row_id = 1) +
   theme(axis.text = element_text(size = 11))
 ```
-```{r, fig.height=2}
+```{r, fig.height=3}
 sv_force(shp, row_id = 1)
 ```
 
@@ -120,8 +120,8 @@ shp_i <- shapviz(
   fit, X_pred = data.matrix(X_explain), X = X_explain, interactions = TRUE
 )
 sv_dependence(shp_i, v = "log_carat", color_var = xvars, interactions = TRUE)
-sv_interaction(shp_i) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+sv_interaction(shp_i)
+sv_interaction(shp_i, kind = "bar")
 ```
 
 ## Interface to other packages
@@ -189,16 +189,17 @@ h2o.init()
 iris2 <- as.h2o(iris)
 
 # Random forest
-fit_rf <- h2o.randomForest(colnames(iris[-1]), "Sepal.Length", training_frame = iris2)
+xvars <- colnames(iris[-1])
+fit_rf <- h2o.randomForest(xvars, "Sepal.Length", training_frame = iris2)
 shp_rf <- shapviz(fit_rf, X_pred = iris)
 sv_force(shp_rf, row_id = 1)
-sv_dependence(shp_rf, "Species")
+sv_dependence(shp_rf, xvars)
 
 # Linear model
-fit_lm <- h2o.glm(colnames(iris[-1]), "Sepal.Length", training_frame = iris2)
+fit_lm <- h2o.glm(, "Sepal.Length", training_frame = iris2)
 shp_lm <- shapviz(fit_lm, X_pred = iris, background_frame = iris2)
 sv_force(shp_lm, row_id = 1)
-sv_dependence(shp_lm, "Species")
+sv_dependence(shp_lm, xvars)
 ```
 
 ### treeshap

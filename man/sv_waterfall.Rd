@@ -103,7 +103,8 @@ baseline SHAP value.
 }}
 \examples{
 dtrain <- xgboost::xgb.DMatrix(
-  data.matrix(iris[, -1]), label = iris[, 1], nthread = 1
+  data.matrix(iris[, -1]),
+  label = iris[, 1], nthread = 1
 )
 fit <- xgboost::xgb.train(data = dtrain, nrounds = 20, nthread = 1)
 x <- shapviz(fit, X_pred = dtrain, X = iris[, -1])
@@ -112,11 +113,16 @@ sv_waterfall(x, row_id = 123, max_display = 2, size = 9, fill_colors = 4:5)
 
 # Ordered by colnames(x), combined with max_display
 sv_waterfall(
-  x[, sort(colnames(x))], order_fun = function(s) length(s):1, max_display = 3
+  x[, sort(colnames(x))],
+  order_fun = function(s) length(s):1, max_display = 3
 )
 
 # Aggregate over all observations with Petal.Length == 1.4
 sv_waterfall(x, row_id = x$X$Petal.Length == 1.4)
+
+# Two observations separately
+sv_waterfall(c(x[1, ], x[2, ])) +
+  patchwork::plot_layout(ncol = 1)
 }
 \seealso{
 \code{\link[=sv_force]{sv_force()}}

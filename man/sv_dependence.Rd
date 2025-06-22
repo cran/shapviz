@@ -23,6 +23,9 @@ sv_dependence(object, ...)
   ih_color_num = TRUE,
   ih_scale = FALSE,
   ih_adjusted = FALSE,
+  share_y = FALSE,
+  ylim = NULL,
+  seed = 1L,
   ...
 )
 
@@ -38,6 +41,9 @@ sv_dependence(object, ...)
   ih_color_num = TRUE,
   ih_scale = FALSE,
   ih_adjusted = FALSE,
+  share_y = FALSE,
+  ylim = NULL,
+  seed = 1L,
   ...
 )
 }
@@ -72,13 +78,21 @@ use a value of 0.2 in case \code{v} is discrete, and no jitter otherwise.
 Can be a vector/list if \code{v} is a vector.}
 
 \item{interactions}{Should SHAP interaction values be plotted? Default is \code{FALSE}.
-Requires SHAP interaction values. If \code{color_var = NULL} (or it is equal to \code{v}),
+Requires SHAP interaction values. If \code{color_var = NULL} (or is equal to \code{v}),
 the pure main effect of \code{v} is visualized. Otherwise, twice the SHAP interaction
 values between \code{v} and the \code{color_var} are plotted.}
 
 \item{ih_nbins, ih_color_num, ih_scale, ih_adjusted}{Interaction heuristic (ih)
 parameters used to select the color variable, see \code{\link[=potential_interactions]{potential_interactions()}}.
 Only used if \code{color_var = "auto"} and if there are no SHAP interaction values.}
+
+\item{share_y}{Should y axis be shared across subplots? The default is FALSE.
+Has no effect if \code{ylim} is passed. Only for multiple plots.}
+
+\item{ylim}{A vector of length 2 with manual y axis limits applied to all plots.}
+
+\item{seed}{Random seed for jittering. Default is 1L. Note that this does not
+modify the global seed.}
 }
 \value{
 An object of class "ggplot" (or "patchwork") representing a dependence plot.
@@ -101,21 +115,29 @@ By default, the feature on the color scale is selected via SHAP interactions
 }}
 \examples{
 dtrain <- xgboost::xgb.DMatrix(
-  data.matrix(iris[, -1]), label = iris[, 1], nthread = 1
+  data.matrix(iris[, -1]),
+  label = iris[, 1], nthread = 1
 )
 fit <- xgboost::xgb.train(data = dtrain, nrounds = 10, nthread = 1)
 x <- shapviz(fit, X_pred = dtrain, X = iris)
 sv_dependence(x, "Petal.Length")
 sv_dependence(x, "Petal.Length", color_var = "Species")
 sv_dependence(x, "Petal.Length", color_var = NULL)
-sv_dependence(x, c("Species", "Petal.Length"))
-sv_dependence(x, "Petal.Width", color_var = c("Species", "Petal.Length"))
+sv_dependence(x, c("Species", "Petal.Length"), share_y = TRUE)
+sv_dependence(x, "Petal.Width", color_var = c("Species", "Petal.Length")) +
+  patchwork::plot_layout(ncol = 1)
 
 # SHAP interaction values/main effects
 x2 <- shapviz(fit, X_pred = dtrain, X = iris, interactions = TRUE)
 sv_dependence(x2, "Petal.Length", interactions = TRUE)
 sv_dependence(
-  x2, c("Petal.Length", "Species"), color_var = NULL, interactions = TRUE
+  x2, c("Petal.Length", "Species"),
+  color_var = NULL, interactions = TRUE
+)
+sv_dependence(
+  x2, "Petal.Length",
+  color_var = colnames(iris[-1]), interactions = TRUE,
+  share_y = TRUE
 )
 }
 \seealso{

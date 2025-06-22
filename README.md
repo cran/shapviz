@@ -3,7 +3,7 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/ModelOriented/shapviz/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ModelOriented/shapviz/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/ModelOriented/shapviz/graph/badge.svg)](https://app.codecov.io/gh/ModelOriented/shapviz?branch=main)
+[![Codecov test coverage](https://codecov.io/gh/ModelOriented/shapviz/graph/badge.svg)](https://app.codecov.io/gh/ModelOriented/shapviz)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/shapviz)](https://cran.r-project.org/package=shapviz)
 
 [![](https://cranlogs.r-pkg.org/badges/shapviz)](https://cran.r-project.org/package=shapviz) 
@@ -17,7 +17,7 @@
 
 - `sv_importance()`: Importance plot (bar/beeswarm).
 - `sv_dependence()` and `sv_dependence2D()`: Dependence plots to study feature effects and interactions.
-- `sv_interaction()`: Interaction plot (beeswarm).
+- `sv_interaction()`: Interaction plot (beeswarm/bar).
 - `sv_waterfall()`: Waterfall plot to study single or average predictions.
 - `sv_force()`: Force plot as alternative to waterfall plot.
 
@@ -69,14 +69,14 @@ shp <- shapviz(fit, X_pred = data.matrix(X_explain), X = X_explain)
 
 sv_importance(shp, show_numbers = TRUE)
 sv_importance(shp, kind = "bee")
-sv_dependence(shp, v = xvars)  # multiple plots -> patchwork
+sv_dependence(shp, v = xvars, share_y = TRUE)
 ```
 
 ![](man/figures/README-imp.svg)
 
 ![](man/figures/README-bee.svg)
 
-![](man/figures/README-dep.svg)
+![](man/figures/README-dep.png)
 
 
 Decompositions of individual predictions can be visualized as waterfall or force plot:

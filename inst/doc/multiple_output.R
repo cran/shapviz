@@ -34,9 +34,8 @@ x
 sv_importance(x)
 sv_importance(x, bar_type = "stack")  # Same but stacked
 
-sv_dependence(x, v = "Petal.Length") +
-  plot_layout(ncol = 1) &
-  ylim(-3, 4)  # Same y scale to get impression on strength
+sv_dependence(x, v = "Petal.Length", share_y = TRUE) +
+  plot_layout(ncol = 1)
 
 ## -----------------------------------------------------------------------------
 library(shapviz)
@@ -55,8 +54,7 @@ x_subgroups <- split(shap_xgb, f = iris$Species)
 # SHAP analysis
 sv_importance(x_subgroups, bar_type = "stack")
 
-sv_dependence(x_subgroups, v = "Petal.Length") +
+sv_dependence(x_subgroups, v = "Petal.Length", share_y = TRUE) +
   plot_layout(ncol = 1) & 
-  xlim(1, 7) &
-  ylim(-1.4, 2.2)
+  xlim(1, 7)
 
