@@ -1,6 +1,6 @@
-bdc90ba4424b8ef704aab549ca0086dd *DESCRIPTION
+441d3b3f909f7365808e8ec676ecef8e *DESCRIPTION
 a5d5ae959678405ce1a75d240fc63070 *NAMESPACE
-9638f6f87915eb96f21ddd09e1e1ef06 *NEWS.md
+b649c80f07addff34dc07505052ac852 *NEWS.md
 fc3f180c0a1bbaa75478788aa0ba57a9 *R/bee.R
 c93623f94817880dc87e3343f67bd591 *R/collapse_shap.R
 e8fe1fa431023f521b5810a5f0837656 *R/collect_axes.R
@@ -14,14 +14,14 @@ b5e4c044ddbca5787a9bfd49b2007fc4 *R/shapviz.R
 0ef115d468e376fa6d2be8e463f35366 *R/sv_dependence2D.R
 c0c874ba4ff5206a017fe9da8dfc93bc *R/sv_force.R
 09ad045b489f5d7090e68022b3781ac1 *R/sv_importance.R
-caffe4c89ed238372aa48ba4f1ba92aa *R/sv_interaction.R
+ce7fbedd99ff9779fd08751e16f0c167 *R/sv_interaction.R
 2eca0185588b1018f63be3127f39c62c *R/sv_waterfall.R
 ad4954bdd1d3d6f98693edb204f30b44 *README.md
 3297088e817f6835ce080656aff4d4bf *build/vignette.rds
 fd5d8e211b289b28d1e5c1c5801df459 *data/miami.rda
 89e884698eafad49226ec7b7c0c01cae *inst/doc/basic_use.R
 91ac16d98c55d03bef916c0b9da0d4b6 *inst/doc/basic_use.Rmd
-abed14ca3e7b8805fbd2e931b5c8a8c3 *inst/doc/basic_use.html
+2266802706d249358cd433b424b05b44 *inst/doc/basic_use.html
 519ba018467f6493c422e5bbec77aa10 *inst/doc/geographic.R
 56a958af85310beaae5381d2e575d509 *inst/doc/geographic.Rmd
 0e6d4172e79fa3ccdb9bd965face82df *inst/doc/geographic.html
